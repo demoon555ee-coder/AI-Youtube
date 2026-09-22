@@ -64,7 +64,7 @@ def test_v27_frontend_builds_api_base_into_client_bundle():
     compose = (ROOT / "docker-compose.staging.yml").read_text()
     assert "ARG NEXT_PUBLIC_API_BASE" in dockerfile
     assert "ENV NEXT_PUBLIC_API_BASE=${NEXT_PUBLIC_API_BASE}" in dockerfile
-    assert "NEXT_PUBLIC_API_BASE: http://localhost:8001" in compose
+    assert "NEXT_PUBLIC_API_BASE: http://127.0.0.1:8001" in compose
 
 
 def test_v27_image_publish_is_gated_by_staging_e2e():
