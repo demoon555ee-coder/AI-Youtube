@@ -40,6 +40,12 @@ def test_staging_migration_bootstraps_base_schema_explicitly():
     assert "CREATE ROLE anon" in script
     assert "CREATE ROLE authenticated" in script
 
+def test_staging_media_uses_shared_named_volume():
+    data = yaml.safe_load((ROOT / "docker-compose.staging.yml").read_text())
+    for service in ("api", "worker"):
+        assert "staging_output:/app/data/output" in data["services"][service]["volumes"]
+    assert "staging_output" in data["volumes"]
+
 def test_staging_web_api_host_matches_browser_origin():
     data = yaml.safe_load((ROOT / "docker-compose.staging.yml").read_text())
     web = data["services"]["web"]
