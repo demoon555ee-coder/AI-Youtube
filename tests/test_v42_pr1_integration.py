@@ -77,6 +77,22 @@ def test_agent_task_worker_uses_runtime_factory_and_isolated_cost():
     assert AgentTaskWorker._actual_cost({}, 1.5) == Decimal("0")
 
 
+def test_staging_mock_video_provider_is_runtime_available():
+    from app.routing.policy import Candidate
+    from app.routing.service import ProviderRouter
+
+    candidate = Candidate(
+        provider="mock_video",
+        kind="mock_video",
+        tier="economy",
+        priority=10,
+        unit="second",
+        unit_cost_usd=0.0,
+        capabilities={"video": True},
+    )
+    assert ProviderRouter._runtime_available(ProviderRouter.__new__(ProviderRouter), candidate) is True
+
+
 def test_publish_capability_is_governed_and_after_qa():
     from app.governance.service import DEFAULT_ACTIONS
     from app.planner.service import DEFAULT_BLUEPRINT
