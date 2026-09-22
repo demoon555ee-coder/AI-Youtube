@@ -22,6 +22,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: chmod +x scripts/*.sh scripts/rotate_encryption_keys.py
       - run: python -m compileall -q app
       - run: pytest -q
       - run: python scripts/full_audit.py
@@ -38,7 +40,7 @@ jobs:
           node-version: '22'
           package-manager-cache: false
       - working-directory: frontend
-        run: npm ci --no-audit --no-fund
+        run: npm install --no-audit --no-fund
       - run: node scripts/frontend_ast_check.mjs
       - working-directory: frontend
         run: npm run build
@@ -61,6 +63,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: pip install -r requirements-integration.txt
+      - run: chmod +x scripts/*.sh
       - run: ./scripts/run_integration_tests.sh
 
   staging_e2e:
@@ -69,6 +72,8 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
+      - name: Prepare executable release scripts
+        run: chmod +x scripts/*.sh scripts/rotate_encryption_keys.py
       - name: Prepare staging environment
         run: |
           cp .env.staging.example .env.staging
@@ -124,6 +129,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - run: chmod +x scripts/*.sh scripts/rotate_encryption_keys.py
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
