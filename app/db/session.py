@@ -6,14 +6,9 @@ from app.config import settings
 
 def _normalize_database_url(database_url: str) -> tuple[URL, bool]:
     url = make_url(database_url)
-
-    # The application uses SQLAlchemy's asyncpg driver. Accept plain Neon/Postgres
-    # URLs as well as explicit +asyncpg URLs without requiring psycopg2.
     if url.drivername in {"postgresql", "postgres"}:
         url = url.set(drivername="postgresql+asyncpg")
 
-    # Neon/libpq URLs can contain parameters that asyncpg does not accept as
-    # connect() keyword arguments. Preserve the TLS requirement natively.
     query = dict(url.query)
     sslmode = str(query.pop("sslmode", "")).lower()
     query.pop("channel_binding", None)
@@ -24,9 +19,10 @@ def _normalize_database_url(database_url: str) -> tuple[URL, bool]:
 
 
 database_url, _use_ssl = _normalize_database_url(settings.database_url)
+connect_args = {"ssl": True, "timeout": 10} if _use_ssl else {"timeout": 10}
 engine = create_async_engine(
     database_url,
-    connect_args={"ssl": True} if _use_ssl else {},
+    connect_args=connect_args,
     future=True,
     pool_pre_ping=True,
     pool_recycle=1800,
