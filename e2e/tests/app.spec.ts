@@ -11,10 +11,10 @@ test("full creator flow: register → channel → ideas → project → rendered
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   await page.getByRole("button", { name: "Create a new account" }).click();
-  await page.getByLabel("Email").fill(email);
-  await page.getByLabel("Password").fill(password);
-  await page.getByLabel("Name").fill("Staging Creator");
-  await page.getByLabel("Organization").fill("Staging Studio");
+  await page.locator("#auth-email").fill(email);
+  await page.locator("#auth-password").fill(password);
+  await page.locator("#auth-name").fill("Staging Creator");
+  await page.locator("#auth-organization").fill("Staging Studio");
   await page.getByRole("button", { name: "Create account" }).click();
   await page.waitForURL("**/");
   await expect(page).toHaveURL(/\/$/);
