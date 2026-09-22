@@ -116,3 +116,27 @@ def test_postpublish_feedback_is_learning_observation():
     service = Path("app/postpublish/service.py").read_text(encoding="utf-8")
     assert "_record_learning_feedback" in service
     assert "AgentLearningService(self.db).record_post_publish_feedback" in service
+
+
+def test_auth_register_and_login_pass_request_then_principal_to_audit():
+    import ast
+    from pathlib import Path
+
+    tree = ast.parse((Path("app/api/auth.py")).read_text(encoding="utf-8"))
+    targets = {"auth_register", "auth_login"}
+    checked = set()
+
+    for node in tree.body:
+        if not isinstance(node, ast.AsyncFunctionDef) or node.name not in targets:
+            continue
+        for call in ast.walk(node):
+            if not isinstance(call, ast.Call) or not isinstance(call.func, ast.Name) or call.func.id != "write_audit":
+                continue
+            assert len(call.args) >= 3
+            assert isinstance(call.args[0], ast.Name) and call.args[0].id == "db"
+            assert isinstance(call.args[1], ast.Name) and call.args[1].id == "request"
+            assert isinstance(call.args[2], ast.Call)
+            assert isinstance(call.args[2].func, ast.Name) and call.args[2].func.id == "Principal"
+            checked.add(node.name)
+
+    assert checked == targets
