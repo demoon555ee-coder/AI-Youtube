@@ -40,6 +40,12 @@ def test_staging_migration_bootstraps_base_schema_explicitly():
     assert "CREATE ROLE anon" in script
     assert "CREATE ROLE authenticated" in script
 
+def test_staging_web_api_host_matches_browser_origin():
+    data = yaml.safe_load((ROOT / "docker-compose.staging.yml").read_text())
+    web = data["services"]["web"]
+    assert web["build"]["args"]["NEXT_PUBLIC_API_BASE"] == "http://127.0.0.1:8001"
+    assert web["environment"]["NEXT_PUBLIC_API_BASE"] == "http://127.0.0.1:8001"
+
 
 def test_backend_image_runs_as_non_root_and_has_healthcheck():
     dockerfile = (ROOT / "Dockerfile").read_text()
