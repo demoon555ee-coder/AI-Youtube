@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 import socket
 import uuid
+import logging
 from datetime import datetime, timedelta
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -22,6 +23,8 @@ from app.media.recovery import MediaRecoveryService
 from app.postpublish.service import PostPublishMonitorService
 from app.observability import metrics, tracing
 from app.workflows.agent_worker import AgentTaskWorker
+
+logger = logging.getLogger(__name__)
 
 
 async def _billing_webhook_loop() -> None:
@@ -134,6 +137,7 @@ class ObservableWorkflowWorker(EngineWorkflowWorker):
         workflow = await self._claim()
         if not workflow:
             return False
+        logger.info("workflow claimed id=%s project_id=%s attempt=%s", workflow.id, workflow.project_id, workflow.attempt)
         await self.heartbeat(status='RUNNING', active_workflow_id=workflow.id)
         metrics.inc('workflow_runs_claimed_total', labels={'status': workflow.status})
         heartbeat = asyncio.create_task(self._heartbeat(workflow.id))
@@ -161,6 +165,7 @@ class ObservableWorkflowWorker(EngineWorkflowWorker):
                     await self._finish(workflow.id, 'COMPLETED', None)
                     metrics.inc('workflow_runs_completed_total', labels={'status': 'COMPLETED'})
                 except Exception as exc:
+                    logger.exception("workflow execution failed id=%s project_id=%s", workflow.id, workflow.project_id)
                     async with self.session_factory() as db:
                         current = await db.get(WorkflowRun, workflow.id)
                     if current and current.status == 'CANCELLED':
@@ -207,6 +212,9 @@ async def main() -> None:
     postpublish_task = asyncio.create_task(_postpublish_loop())
     try:
         await worker.run_forever()
+    except Exception:
+        logger.exception("workflow worker loop crashed")
+        raise
     finally:
         billing_task.cancel()
         agent_task_worker.cancel()
