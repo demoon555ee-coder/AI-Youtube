@@ -148,7 +148,7 @@ jobs:
           test -f docker-compose.bluegreen.yml
 
   images:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.NEXT_PUBLIC_API_BASE != ''
     needs: [backend, frontend, integration, staging_e2e, release_audit]
     runs-on: ubuntu-latest
     permissions:
