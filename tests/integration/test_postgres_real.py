@@ -30,6 +30,22 @@ async def _fresh_engine(postgres_url: str):
     engine = create_async_engine(postgres_url, pool_pre_ping=True)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(
+            text(
+                """
+                DO $body$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
+                        CREATE ROLE anon NOLOGIN;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+                        CREATE ROLE authenticated NOLOGIN;
+                    END IF;
+                END
+                $body$;
+                """
+            )
+        )
     await apply_migrations(engine)
     return engine
 
