@@ -1,0 +1,10 @@
+.git
+.github
+.pytest_cache
+__pycache__
+*.pyc
+*.pyo
+*.tar.gz
+secrets
+frontend/node_modules
+frontend/.next
