@@ -36,7 +36,7 @@ async def auth_register(payload: RegisterRequest, request: Request, response: Re
         response.set_cookie(key=settings.auth_cookie_name, value=token, max_age=settings.auth_session_ttl_days * 86400, httponly=True, secure=settings.app_env == "production", samesite="lax", path="/")
         # CSRF token is returned only over the authenticated TLS channel and kept in memory by the SPA.
 
-        await write_audit(db, Principal(user.id, org.id, membership.role, "session", session.id, str(org.id), frozenset({"*"})), request, action="auth.register", resource_type="user", resource_id=str(user.id))
+        await write_audit(db, request, Principal(user.id, org.id, membership.role, "session", session.id, str(org.id), frozenset({"*"})), action="auth.register", resource_type="user", resource_id=str(user.id))
         await db.commit()
         return {
             "auth_type": "cookie_session",
@@ -66,7 +66,7 @@ async def auth_login(payload: LoginRequest, response: Response, request: Request
         await clear_login_failures(db, email=email, ip=ip)
         org = await db.get(Organization, membership.organization_id)
         response.set_cookie(key=settings.auth_cookie_name, value=token, max_age=settings.auth_session_ttl_days * 86400, httponly=True, secure=settings.app_env == "production", samesite="lax", path="/")
-        await write_audit(db, Principal(user.id, org.id, membership.role, "session", session.id, str(org.id), frozenset({"*"})), request, action="auth.login", resource_type="user", resource_id=str(user.id))
+        await write_audit(db, request, Principal(user.id, membership.organization_id, membership.role, "session", session.id, str(membership.organization_id), frozenset({"*"})), action="auth.login", resource_type="user", resource_id=str(user.id))
         await db.commit()
         return {
             "auth_type": "cookie_session",
