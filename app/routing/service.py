@@ -113,7 +113,7 @@ class ProviderRouter:
             # custom provider profiles exist. A bad or unavailable profile must not make
             # the portfolio unrecoverable in staging or offline operation.
             fallback_spec = DEFAULTS.get(service, [None])[0]
-            if fallback_spec and not any(c.provider == fallback_spec["provider"] for c in result):
+            if fallback_spec and not any(c.provider == fallback_spec["provider"] and c.runtime_available for c in result):
                 result.append(
                     Candidate(
                         **{**fallback_spec, "config": {}},
