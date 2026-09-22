@@ -1,0 +1,74 @@
+name: Immutable release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract release tag
+        id: version
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Build and push API
+        id: api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/youtube-ai-platform-api:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/youtube-ai-platform-api:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Build and push Web
+        id: web
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          build-args: |
+            NEXT_PUBLIC_API_BASE=${{ vars.NEXT_PUBLIC_API_BASE }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/youtube-ai-platform-web:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/youtube-ai-platform-web:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Create immutable release manifest
+        env:
+          API_IMAGE_REF: ghcr.io/${{ github.repository_owner }}/youtube-ai-platform-api@${{ steps.api.outputs.digest }}
+          WEB_IMAGE_REF: ghcr.io/${{ github.repository_owner }}/youtube-ai-platform-web@${{ steps.web.outputs.digest }}
+        run: |
+          python scripts/create_release_manifest.py "${{ steps.version.outputs.version }}" \
+            -o RELEASE_MANIFEST.json \
+            --api-image-ref "$API_IMAGE_REF" \
+            --web-image-ref "$WEB_IMAGE_REF"
+          python scripts/verify_release_manifest.py RELEASE_MANIFEST.json --expected-tag "${{ steps.version.outputs.version }}"
+      - name: Upload release manifest artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-manifest-${{ steps.version.outputs.version }}
+          path: RELEASE_MANIFEST.json
+      - name: Attach manifest to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: gh release create "${GITHUB_REF_NAME}" --generate-notes RELEASE_MANIFEST.json || gh release upload "${GITHUB_REF_NAME}" RELEASE_MANIFEST.json --clobber

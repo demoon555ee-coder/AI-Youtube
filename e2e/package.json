@@ -1,0 +1,12 @@
+{
+  "name": "youtube-ai-platform-e2e",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "typescript": "^5.8.0"
+  }
+}

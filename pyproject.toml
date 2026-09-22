@@ -1,0 +1,10 @@
+[project]
+name = "youtube-ai-platform"
+version = "4.2.1"
+requires-python = ">=3.12"
+
+[tool.pyright]
+include = ["app"]
+extraPaths = ["."]
+venvPath = "."
+venv = ".venv"

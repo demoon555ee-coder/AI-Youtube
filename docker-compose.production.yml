@@ -1,0 +1,105 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  migrate:
+    image: ${API_IMAGE_REF:-ghcr.io/example/youtube-ai-platform-api:${RELEASE_TAG:-4.2.1}}
+    restart: "no"
+    env_file: .env.production
+    environment:
+      APP_ENV: production
+      AUTO_MIGRATE: "false"
+      MIGRATION_ONLY: "true"
+      APP_VERSION: ${RELEASE_TAG:-4.2.1}
+    command: ["python", "scripts/migrate.py"]
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./secrets:/app/secrets:ro
+
+  api:
+    image: ${API_IMAGE_REF:-ghcr.io/example/youtube-ai-platform-api:${RELEASE_TAG:-4.2.1}}
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      APP_ENV: production
+      APP_VERSION: ${RELEASE_TAG:-4.2.1}
+      AUTO_MIGRATE: "false"
+      SCHEMA_GATE_ENABLED: "true"
+      DEPLOYMENT_ENV: production
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./secrets:/app/secrets:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+      start_period: 15s
+
+  worker:
+    image: ${API_IMAGE_REF:-ghcr.io/example/youtube-ai-platform-api:${RELEASE_TAG:-4.2.1}}
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      APP_ENV: production
+      APP_VERSION: ${RELEASE_TAG:-4.2.1}
+      AUTO_MIGRATE: "false"
+      DEPLOYMENT_ENV: production
+    command: ["python", "-m", "app.workflows.worker"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./data:/app/data
+      - ./secrets:/app/secrets:ro
+
+  web:
+    image: ${WEB_IMAGE_REF:-ghcr.io/example/youtube-ai-platform-web:${RELEASE_TAG:-4.2.1}}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE}
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  prometheus:
+    image: prom/prometheus:v3.8.0
+    restart: unless-stopped
+    profiles: ["observability"]
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./secrets/metrics_token:/run/secrets/metrics_token:ro
+      - prometheus_data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  prometheus_data:

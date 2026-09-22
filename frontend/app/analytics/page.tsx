@@ -1,0 +1,8 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Shell from "../../components/Shell";
+import { apiGet, apiPost, getStoredChannelId } from "../../lib/api";
+
+type Status = { connected:boolean; youtube_channel_id?:string|null };
+export default function AnalyticsPage(){const [status,setStatus]=useState<Status|null>(null);const [report,setReport]=useState<any>(null);const [error,setError]=useState("");useEffect(()=>{const id=getStoredChannelId();if(!id)return;void apiGet<Status>(`/api/v1/youtube/channels/${id}/status`).then(setStatus).catch(()=>setStatus({connected:false}));},[]);async function sync(){const id=getStoredChannelId();if(!id)return;setError("");try{const end=new Date();const start=new Date(end.getTime()-27*86400000);setReport(await apiPost(`/api/v1/youtube/channels/${id}/analytics`,{start_date:start.toISOString().slice(0,10),end_date:end.toISOString().slice(0,10)}));}catch(e){setError(e instanceof Error?e.message:"Analytics sync failed");}}return <Shell><div className="topbar"><div><div className="kicker">Performance intelligence</div><h1>Analytics</h1><p className="sub">Sync YouTube Analytics into the Channel Brain database.</p></div><button className="btn primary" disabled={!status?.connected} onClick={()=>void sync()}>Sync last 28 days</button></div>{!status?.connected&&<div className="notice" style={{marginBottom:16}}>YouTube is not connected. Open Settings to authorize the channel.</div>}{error&&<div className="error" style={{marginBottom:16}}>{error}</div>}{report&&<div className="panel"><div className="cardTitle"><h2>Latest sync</h2><span className="badge success">{report.stored_rows} rows stored</span></div><pre className="code">{JSON.stringify(report.report,null,2)}</pre></div>}</Shell>}

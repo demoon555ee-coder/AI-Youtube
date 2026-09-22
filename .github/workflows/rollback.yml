@@ -1,0 +1,50 @@
+name: Production rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Immutable previous application release tag
+        required: true
+        type: string
+      manifest_path:
+        description: Path to the previous release manifest on the deployment host
+        required: true
+        default: RELEASE_MANIFEST.json
+        type: string
+      environment:
+        description: Protected deployment environment
+        required: true
+        default: production
+        type: environment
+
+permissions:
+  contents: read
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Validate rollback tag
+        shell: bash
+        run: |
+          [[ "${{ inputs.release_tag }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]
+          test -x scripts/rollback_blue_green.sh
+      - name: Execute rollback over SSH
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+        shell: bash
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+          printf '%s\n' "$REGISTRY_PASSWORD" | ssh "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io -u '$REGISTRY_USER' --password-stdin"
+          ssh "$DEPLOY_USER@$DEPLOY_HOST" "cd /opt/youtube-ai-platform && ./scripts/rollback_blue_green.sh '$RELEASE_TAG' '${{ inputs.manifest_path }}' .env.production docker-compose.bluegreen.yml"

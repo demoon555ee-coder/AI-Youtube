@@ -1,0 +1,1 @@
+from app.creative_intelligence.service import CreativeIntelligenceService

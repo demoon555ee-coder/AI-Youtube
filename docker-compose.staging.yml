@@ -1,0 +1,89 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: youtube_ai_staging
+      POSTGRES_USER: staging
+      POSTGRES_PASSWORD: staging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U staging -d youtube_ai_staging"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - staging_pgdata:/var/lib/postgresql/data
+
+  migrate:
+    build: .
+    env_file: .env.staging
+    environment:
+      APP_ENV: staging
+      APP_VERSION: 4.2.1
+      DATABASE_URL: postgresql+asyncpg://staging:staging@db:5432/youtube_ai_staging
+      AUTO_MIGRATE: "false"
+      MIGRATION_ONLY: "true"
+    command: ["python", "scripts/migrate.py"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: .
+    env_file: .env.staging
+    environment:
+      APP_ENV: staging
+      APP_VERSION: 4.2.1
+      DEPLOYMENT_ENV: staging
+      DATABASE_URL: postgresql+asyncpg://staging:staging@db:5432/youtube_ai_staging
+      AUTO_MIGRATE: "false"
+      SCHEMA_GATE_ENABLED: "true"
+      WORKFLOW_ENABLED: "true"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:8001:8000"
+    volumes:
+      - ./data/staging-output:/app/data/output
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  worker:
+    build: .
+    env_file: .env.staging
+    environment:
+      APP_ENV: staging
+      APP_VERSION: 4.2.1
+      DEPLOYMENT_ENV: staging
+      DATABASE_URL: postgresql+asyncpg://staging:staging@db:5432/youtube_ai_staging
+      AUTO_MIGRATE: "false"
+      WORKFLOW_ENABLED: "true"
+      WORKFLOW_POLL_SECONDS: "0.5"
+      RESEARCH_SCHEDULER_ENABLED: "false"
+    command: ["python", "-m", "app.workflows.worker"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./data/staging-output:/app/data/output
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_BASE: http://localhost:8001
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE: http://localhost:8001
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3001:3000"
+
+volumes:
+  staging_pgdata:

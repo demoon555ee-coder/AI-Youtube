@@ -1,0 +1,37 @@
+name: External sandbox checks
+
+on:
+  workflow_dispatch:
+    inputs:
+      youtube_video_id:
+        description: Public YouTube video ID used for read-only API validation
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  sandbox:
+    runs-on: ubuntu-latest
+    environment: sandbox
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Stripe read-only check
+        if: ${{ env.STRIPE_SECRET_KEY != '' }}
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_PRICE_CREATOR: ${{ secrets.STRIPE_PRICE_CREATOR }}
+          STRIPE_PRICE_PRO: ${{ secrets.STRIPE_PRICE_PRO }}
+          STRIPE_PRICE_STUDIO: ${{ secrets.STRIPE_PRICE_STUDIO }}
+          BILLING_PROVIDER: stripe
+        run: python scripts/stripe_sandbox_check.py
+      - name: YouTube Data API read-only check
+        env:
+          YOUTUBE_RESEARCH_API_KEY: ${{ secrets.YOUTUBE_RESEARCH_API_KEY }}
+          YOUTUBE_RESEARCH_VIDEO_ID: ${{ inputs.youtube_video_id }}
+        run: python scripts/youtube_api_sandbox_check.py

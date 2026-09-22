@@ -1,0 +1,23 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Shell from "../../components/Shell";
+import { apiGet, apiPost } from "../../lib/api";
+
+type Policy = { id:string; planning_horizon_days:number; reserve_ratio:number; target_utilization_pct:number; max_channel_concentration_pct:number; min_channel_allocation_usd:number; min_daily_buffer_usd:number; enabled:boolean };
+type Allocation = { id:string; channel_id:string; allocation_date:string; target_budget_usd:number; projected_spend_usd:number; budget_weight:number; fairness_score:number; rank:number; status:string };
+type Forecast = { days:number; scheduled_videos:number; average_video_cost_usd:number; projected_production_cost_usd:number; current_month_spend_usd:number; projected_month_spend_usd:number; monthly_budget_usd:number; within_budget:boolean };
+const money=(n:number)=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2}).format(n);
+
+export default function ManagerPage(){
+ const [policy,setPolicy]=useState<Policy|null>(null); const [allocs,setAllocs]=useState<Allocation[]>([]); const [forecast,setForecast]=useState<Forecast|null>(null); const [busy,setBusy]=useState(false); const [error,setError]=useState("");
+ const load=async()=>{try{const [p,a,f]=await Promise.all([apiGet<{policy:Policy}>("/api/v1/portfolio/manager/policy"),apiGet<{allocations:Allocation[]}>("/api/v1/portfolio/manager/allocations"),apiPost<Forecast>("/api/v1/portfolio/manager/forecast",{days:30,average_video_cost_usd:1})]);setPolicy(p.policy);setAllocs(a.allocations);setForecast(f);}catch(e){setError(e instanceof Error?e.message:"Failed to load manager");}};
+ useEffect(()=>{void load();},[]);
+ const rebalance=async()=>{setBusy(true);setError("");try{await apiPost("/api/v1/portfolio/manager/rebalance");await load();}catch(e){setError(e instanceof Error?e.message:"Rebalance failed");}finally{setBusy(false)}};
+ return <Shell><div className="topbar"><div><div className="kicker">Autonomous Portfolio Manager</div><h1>Resource Control Plane</h1><p className="sub">Allocate budget across channels before production consumes it.</p></div><button className="btn primary" disabled={busy} onClick={()=>void rebalance()}>{busy?"Rebalancing…":"Rebalance portfolio"}</button></div>
+ {error&&<div className="error">{error}</div>}
+ {policy&&<div className="grid grid4" style={{marginBottom:16}}><div className="panel metric"><span className="label">Reserve</span><span className="value">{Math.round(policy.reserve_ratio*100)}%</span><span className="badge">Protected</span></div><div className="panel metric"><span className="label">Target utilization</span><span className="value">{policy.target_utilization_pct}%</span><span className="badge">Budget policy</span></div><div className="panel metric"><span className="label">Max concentration</span><span className="value">{policy.max_channel_concentration_pct}%</span><span className="badge">Per channel</span></div><div className="panel metric"><span className="label">Planning horizon</span><span className="value">{policy.planning_horizon_days}d</span><span className="badge">Autonomous</span></div></div>}
+ <div className="grid grid2"><div className="panel"><div className="cardTitle"><h2>Forecast</h2>{forecast&&<span className={`badge ${forecast.within_budget?"success":"danger"}`}>{forecast.within_budget?"Within budget":"Over budget"}</span>}</div>{!forecast?<div className="empty">Loading…</div>:<><div className="idea"><div className="ideaText"><strong>{forecast.scheduled_videos} scheduled videos</strong><small>{forecast.days}-day production horizon</small></div><span className="badge">{money(forecast.projected_production_cost_usd)}</span></div><div className="idea"><div className="ideaText"><strong>Projected month spend</strong><small>Current + forecast production</small></div><span className="badge">{money(forecast.projected_month_spend_usd)}</span></div><div className="idea"><div className="ideaText"><strong>Average video cost</strong><small>Planning assumption</small></div><span className="badge">{money(forecast.average_video_cost_usd)}</span></div></>}</div>
+ <div className="panel"><div className="cardTitle"><h2>Latest allocations</h2><span className="badge success">{allocs.length} records</span></div>{allocs.length===0?<div className="empty">No allocations yet. Run a rebalance.</div>:allocs.slice(0,12).map(a=><div className="idea" key={a.id}><div className="ideaText"><strong>#{a.rank} · {a.channel_id.slice(0,8)}</strong><small>{a.allocation_date} · weight {a.budget_weight} · fairness {a.fairness_score.toFixed(2)}</small></div><span className="badge">{money(a.target_budget_usd)}</span></div>)}</div></div>
+ </Shell>;
+}

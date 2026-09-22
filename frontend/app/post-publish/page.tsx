@@ -1,0 +1,16 @@
+"use client";
+import { useEffect, useState } from "react";
+import Shell from "../../components/Shell";
+import { apiGet, apiPost, getStoredChannelId } from "../../lib/api";
+
+type Monitor={id:string;video_id:string;enabled:boolean;status:string;next_check_at:string;last_checked_at?:string|null;auto_correct:boolean};
+type Alert={id:string;video_id:string;alert_type:string;severity:string;metric:string;delta_pct:number;status:string;remediation:any};
+export default function PostPublishPage(){
+ const [monitors,setMonitors]=useState<Monitor[]>([]); const [alerts,setAlerts]=useState<Alert[]>([]); const [error,setError]=useState("");
+ async function load(){ const id=getStoredChannelId(); if(!id)return; try{const [m,a]=await Promise.all([apiGet<{monitors:Monitor[]}>(`/api/v1/post-publish/channels/${id}/monitors`),apiGet<{alerts:Alert[]}>(`/api/v1/post-publish/channels/${id}/alerts?status=OPEN`)]);setMonitors(m.monitors);setAlerts(a.alerts);}catch(e){setError(e instanceof Error?e.message:"Failed to load post-publish intelligence");}}
+ useEffect(()=>{void load(); const t=setInterval(()=>void load(),30000); return ()=>clearInterval(t);},[]);
+ async function run(id:string){try{await apiPost(`/api/v1/post-publish/monitors/${id}/run`);await load();}catch(e){setError(e instanceof Error?e.message:"Monitor run failed");}}
+ async function ack(id:string){try{await apiPost(`/api/v1/post-publish/alerts/${id}/ack`);await load();}catch(e){setError(e instanceof Error?e.message:"Alert update failed");}}
+ async function revise(id:string){try{await apiPost(`/api/v1/post-publish/alerts/${id}/create-revision`,{auto_run:true});await load();}catch(e){setError(e instanceof Error?e.message:"Revision creation failed");}}
+ return <Shell><div className="topbar"><div><div className="kicker">After publication</div><h1>Post-Publish Intelligence</h1><p className="sub">Watch retention, views and CTR signals after a video is published.</p></div></div>{error&&<div className="error">{error}</div>}<div className="grid grid2"><div className="panel"><div className="cardTitle"><h2>Monitors</h2><span className="badge success">{monitors.length}</span></div>{monitors.map(m=><div className="listItem" key={m.id}><div style={{display:"flex",justifyContent:"space-between",gap:10}}><strong>{m.video_id}</strong><button className="btn" onClick={()=>void run(m.id)}>Run now</button></div><div className="mini">{m.status} · next {new Date(m.next_check_at).toLocaleString()} · auto-correct {m.auto_correct?"on":"off"}</div></div>)}{monitors.length===0&&<div className="empty">No post-publish monitors yet.</div>}</div><div className="panel"><div className="cardTitle"><h2>Open alerts</h2><span className="badge danger">{alerts.length}</span></div>{alerts.map(a=><div className="listItem" key={a.id}><div style={{display:"flex",justifyContent:"space-between",gap:10}}><strong>{a.metric}</strong><span className={`badge ${a.severity==="high"?"danger":"warn"}`}>{a.severity}</span></div><div className="mini">{a.video_id} · {a.delta_pct.toFixed(1)}% vs baseline</div><div style={{marginTop:8}}><button className="btn" onClick={()=>void revise(a.id)}>Create improved version</button><button className="btn" onClick={()=>void ack(a.id)}>Acknowledge</button></div></div>)}{alerts.length===0&&<div className="empty">No open performance alerts.</div>}</div></div></Shell>;
+}

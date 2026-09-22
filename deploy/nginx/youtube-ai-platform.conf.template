@@ -1,0 +1,28 @@
+# Rendered by scripts/switch_slot.sh. Include this file from the host nginx server.
+upstream youtube_ai_api_active {
+    server 127.0.0.1:{{API_PORT}};
+}
+upstream youtube_ai_web_active {
+    server 127.0.0.1:{{WEB_PORT}};
+}
+
+server {
+    listen 443 ssl;
+    server_name api.example.com;
+    location / {
+        proxy_pass http://youtube_ai_api_active;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Request-ID $request_id;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name app.example.com;
+    location / {
+        proxy_pass http://youtube_ai_web_active;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+    }
+}
