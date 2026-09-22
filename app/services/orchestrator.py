@@ -83,7 +83,7 @@ class Orchestrator:
                 )
                 latest_run = await self._latest_step_run(project.id, step_name)
                 if latest_run and latest_run.status == "FAILED" and latest_decision:
-                    previous_provider = latest_decision.chosen_provider
+                    previous_provider = self._retry_excluded_provider(latest_run, latest_decision)
                 service_by_step = {
                     "research": "research", "script": "llm", "storyboard": "llm", "scene_director": "llm",
                     "production": "visual", "editor": "render", "thumbnail": "image", "qa": "llm",
@@ -515,6 +515,14 @@ class Orchestrator:
             return
 
         await record(route_meta, quantity=1.0, source=step_name, provider_usage=usage)
+
+    @staticmethod
+    def _retry_excluded_provider(latest_run: AgentRun, latest_decision: RoutingDecision) -> str | None:
+        """Exclude the previous provider only when its failure was transient."""
+        error_message = str(latest_run.error_message or "")
+        if not error_message or is_transient_provider_error(RuntimeError(error_message)):
+            return latest_decision.chosen_provider
+        return None
 
     async def _latest_step_run(self, project_id, agent_name: str) -> AgentRun | None:
         q = await self.db.execute(
