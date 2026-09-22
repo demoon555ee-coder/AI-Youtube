@@ -45,7 +45,7 @@ services:
     ports:
       - "127.0.0.1:8001:8000"
     volumes:
-      - ./data/staging-output:/app/data/output
+      - staging_output:/app/data/output
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health/ready', timeout=3)"]
       interval: 5s
@@ -88,3 +88,4 @@ services:
 
 volumes:
   staging_pgdata:
+  staging_output:
