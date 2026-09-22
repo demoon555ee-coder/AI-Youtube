@@ -22,6 +22,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://staging:staging@db:5432/youtube_ai_staging
       AUTO_MIGRATE: "false"
       MIGRATION_ONLY: "true"
+      MIGRATION_BOOTSTRAP_BASE_SCHEMA: "true"
     command: ["python", "scripts/migrate.py"]
     depends_on:
       db:
