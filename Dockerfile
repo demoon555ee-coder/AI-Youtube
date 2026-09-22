@@ -16,7 +16,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
-COPY data ./data
 COPY scripts ./scripts
 RUN mkdir -p /app/data/output /app/secrets \
     && chown -R app:app /app
