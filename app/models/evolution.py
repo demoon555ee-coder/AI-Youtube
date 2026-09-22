@@ -25,8 +25,8 @@ class ContentVersion(Base):
     change_plan: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     metrics_snapshot: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     status: Mapped[str] = mapped_column(String(30), default="DRAFT", index=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
 
 class ContentArtifact(Base):
