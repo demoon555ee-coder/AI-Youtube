@@ -109,12 +109,19 @@ class ProviderRouter:
                     unit=r.unit, unit_cost_usd=r.unit_cost_usd, capabilities=r.capabilities or {}, config=r.config_json or {},
                 )),
             ) for r in rows]
-            # Always keep a local mock escape hatch for supported services. A custom provider
-            # profile can therefore fail over without making the portfolio unrecoverable.
-            if service in {"llm", "research"} and not any(c.provider == "mock" for c in result):
-                fallback_spec = next((x for x in DEFAULTS.get(service, []) if x["provider"] == "mock"), None)
-                if fallback_spec:
-                    result.append(Candidate(**{**fallback_spec, "config": {}}, runtime_available=True))
+            # Always keep the first local/offline default as an escape hatch when
+            # custom provider profiles exist. A bad or unavailable profile must not make
+            # the portfolio unrecoverable in staging or offline operation.
+            fallback_spec = DEFAULTS.get(service, [None])[0]
+            if fallback_spec and not any(c.provider == fallback_spec["provider"] for c in result):
+                result.append(
+                    Candidate(
+                        **{**fallback_spec, "config": {}},
+                        runtime_available=self._runtime_available(
+                            Candidate(**{**fallback_spec, "config": {}})
+                        ),
+                    )
+                )
             return result
         configured = SETTINGS_PROVIDER.get(service, lambda: "mock")()
         specs = []
