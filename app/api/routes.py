@@ -122,7 +122,7 @@ async def run_project(
     db: AsyncSession = Depends(get_db),
     principal: Principal = Depends(require_roles({"owner", "admin", "editor"})),
 ):
-    project = await db.get(VideoProject, project_id, with_for_update=True)
+    project = await db.get(VideoProject, project_id)
     if not project:
         raise HTTPException(404, "Project not found")
     if project.status in {"QUEUED", "RESEARCHING", "SCRIPTING", "STORYBOARDING", "GENERATING_ASSETS", "EDITING", "GENERATING_THUMBNAIL", "QA"}:
