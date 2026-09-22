@@ -1600,24 +1600,12 @@ ALTER TABLE channels
     (
         "034_lock_public_data_api_roles",
         """
-        DO $
-        DECLARE
-            role_name TEXT;
-        BEGIN
-            FOR role_name IN
-                SELECT rolname
-                FROM pg_roles
-                WHERE rolname IN ('anon', 'authenticated')
-            LOOP
-                EXECUTE format('REVOKE ALL ON SCHEMA public FROM %I', role_name);
-                EXECUTE format('REVOKE ALL ON ALL TABLES IN SCHEMA public FROM %I', role_name);
-                EXECUTE format('REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM %I', role_name);
-                EXECUTE format('REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM %I', role_name);
-            END LOOP;
-        END $;
+        REVOKE ALL ON SCHEMA public FROM anon, authenticated;
+        REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon, authenticated;
+        REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated;
+        REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM anon, authenticated;
         """,
-    ),
-]
+    ),]
 
 
 def _split_sql(sql: str) -> list[str]:
