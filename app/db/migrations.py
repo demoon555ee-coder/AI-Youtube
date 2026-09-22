@@ -1622,6 +1622,23 @@ ALTER TABLE channels
             ALTER COLUMN change_plan SET NOT NULL,
             ALTER COLUMN metrics_snapshot SET NOT NULL;
         """,
+    ),
+    (
+        "036_enforce_content_version_timestamps",
+        """
+        ALTER TABLE content_versions
+            ALTER COLUMN created_at SET DEFAULT CURRENT_TIMESTAMP,
+            ALTER COLUMN updated_at SET DEFAULT CURRENT_TIMESTAMP;
+        UPDATE content_versions
+        SET created_at = CURRENT_TIMESTAMP
+        WHERE created_at IS NULL;
+        UPDATE content_versions
+        SET updated_at = CURRENT_TIMESTAMP
+        WHERE updated_at IS NULL;
+        ALTER TABLE content_versions
+            ALTER COLUMN created_at SET NOT NULL,
+            ALTER COLUMN updated_at SET NOT NULL;
+        """,
     ),]
 
 
