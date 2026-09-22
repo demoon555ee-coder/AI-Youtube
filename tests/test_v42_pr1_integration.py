@@ -100,7 +100,7 @@ async def test_configured_provider_profile_keeps_visual_local_fallback():
     from app.routing.service import ProviderRouter
 
     profile = SimpleNamespace(
-        provider="broken_visual",
+        provider="mock_png",
         kind="broken_visual",
         quality_tier="premium",
         priority=100,
