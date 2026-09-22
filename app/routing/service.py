@@ -64,7 +64,7 @@ class ProviderRouter:
     def _runtime_available(self, candidate: Candidate) -> bool:
         if candidate.kind == "mock":
             return True
-        if candidate.kind == "mock_png" or candidate.kind == "espeak" or candidate.kind == "ffmpeg":
+        if candidate.kind in {"mock_png", "mock_video", "espeak", "ffmpeg"}:
             return True
         cfg = candidate.config or {}
         if candidate.kind == "openai_compatible":
