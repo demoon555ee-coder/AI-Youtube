@@ -37,6 +37,8 @@ def test_staging_migration_bootstraps_base_schema_explicitly():
     script = (ROOT / "scripts/migrate.py").read_text()
     assert "MIGRATION_BOOTSTRAP_BASE_SCHEMA" in script
     assert "Base.metadata.create_all" in script
+    assert "CREATE ROLE anon" in script
+    assert "CREATE ROLE authenticated" in script
 
 
 def test_backend_image_runs_as_non_root_and_has_healthcheck():
