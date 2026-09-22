@@ -70,7 +70,7 @@ services:
       migrate:
         condition: service_completed_successfully
     volumes:
-      - ./data/staging-output:/app/data/output
+      - staging_output:/app/data/output
 
   web:
     build:
