@@ -1,9 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve(new URL('..', import.meta.url).pathname);
-const require = createRequire(import.meta.url);
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+// Resolve TypeScript from frontend/node_modules, where CI installs dependencies.
+const require = createRequire(path.join(ROOT, 'frontend', 'package.json'));
 let ts;
 try {
   ts = require('typescript');
