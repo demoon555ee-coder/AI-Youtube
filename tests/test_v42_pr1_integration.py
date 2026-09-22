@@ -140,3 +140,14 @@ def test_auth_register_and_login_pass_request_then_principal_to_audit():
             checked.add(node.name)
 
     assert checked == targets
+
+
+def test_workflow_start_does_not_hold_project_lock_across_sessions():
+    from pathlib import Path
+
+    source = Path("app/api/routes.py").read_text(encoding="utf-8")
+    start = source.index("async def run_project(")
+    end = source.index("\n\n@router.post(\"/projects/{project_id}/retry\"", start)
+    block = source[start:end]
+    assert "await db.get(VideoProject, project_id, with_for_update=True)" not in block
+    assert "WorkflowEngine(SessionLocal).create_or_get" in block
