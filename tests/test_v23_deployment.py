@@ -29,6 +29,15 @@ def test_production_compose_has_migration_gate_and_restart_policy():
     assert data["services"]["api"]["restart"] == "unless-stopped"
     assert data["services"]["worker"]["restart"] == "unless-stopped"
 
+def test_staging_migration_bootstraps_base_schema_explicitly():
+    data = yaml.safe_load((ROOT / "docker-compose.staging.yml").read_text())
+    env = data["services"]["migrate"]["environment"]
+    assert env["MIGRATION_ONLY"] == "true"
+    assert env["MIGRATION_BOOTSTRAP_BASE_SCHEMA"] == "true"
+    script = (ROOT / "scripts/migrate.py").read_text()
+    assert "MIGRATION_BOOTSTRAP_BASE_SCHEMA" in script
+    assert "Base.metadata.create_all" in script
+
 
 def test_backend_image_runs_as_non_root_and_has_healthcheck():
     dockerfile = (ROOT / "Dockerfile").read_text()
