@@ -48,8 +48,9 @@ def test_staging_media_uses_shared_named_volume():
 
 def test_thumbnail_endpoint_has_canonical_file_fallback():
     source = (ROOT / "app/api/routes.py").read_text(encoding="utf-8")
-    assert '"/thumbnail.png"' in source
+    assert '"thumbnail.png"' in source
     assert "settings.output_dir" in source
+    assert "str(project_id)" in source
 
 
 def test_project_page_shows_thumbnail_for_ready_projects():
