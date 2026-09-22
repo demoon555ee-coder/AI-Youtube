@@ -94,6 +94,38 @@ def test_staging_mock_video_provider_is_runtime_available():
     assert ProviderRouter._runtime_available(ProviderRouter.__new__(ProviderRouter), candidate) is True
 
 
+@pytest.mark.asyncio
+async def test_configured_provider_profile_keeps_visual_local_fallback():
+    from types import SimpleNamespace
+    from app.routing.service import ProviderRouter
+
+    profile = SimpleNamespace(
+        provider="broken_visual",
+        kind="broken_visual",
+        quality_tier="premium",
+        priority=100,
+        unit="image",
+        unit_cost_usd=1.0,
+        capabilities={"image": True},
+        config_json={},
+    )
+
+    class Result:
+        def scalars(self):
+            return self
+        def all(self):
+            return [profile]
+
+    class DB:
+        async def execute(self, *args, **kwargs):
+            return Result()
+
+    candidates = await ProviderRouter(DB()).candidates("portfolio-id", "visual")
+    fallback = next(candidate for candidate in candidates if candidate.provider == "mock_png")
+    assert fallback.runtime_available is True
+    assert fallback.capabilities["image"] is True
+
+
 def test_publish_capability_is_governed_and_after_qa():
     from app.governance.service import DEFAULT_ACTIONS
     from app.planner.service import DEFAULT_BLUEPRINT
