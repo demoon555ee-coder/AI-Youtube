@@ -38,7 +38,7 @@ jobs:
           node-version: '22'
           package-manager-cache: false
       - working-directory: frontend
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - run: node scripts/frontend_ast_check.mjs
       - working-directory: frontend
         run: npm run build
