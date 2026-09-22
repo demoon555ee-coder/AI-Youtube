@@ -89,6 +89,7 @@ def test_staging_mock_video_provider_is_runtime_available():
         unit="second",
         unit_cost_usd=0.0,
         capabilities={"video": True},
+        config={},
     )
     assert ProviderRouter._runtime_available(ProviderRouter.__new__(ProviderRouter), candidate) is True
 
