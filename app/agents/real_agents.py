@@ -78,7 +78,28 @@ class LLMScriptAgent(BaseAgent):
             })
         if sections:
             result["sections"] = sections
+        else:
+            result["sections"] = [
+                {
+                    "type": "intro",
+                    "duration": 8.0,
+                    "text": str(idea.get("hook") or f"Почему тема «{topic}» важна прямо сейчас."),
+                    "visual_prompt": f"cinematic opening visual about {topic}",
+                },
+                {
+                    "type": "main",
+                    "duration": 16.0,
+                    "text": f"Разберём ключевые идеи, примеры и практические выводы по теме «{topic}».",
+                    "visual_prompt": f"cinematic documentary b-roll explaining {topic}",
+                },
+                {
+                    "type": "outro",
+                    "duration": 7.0,
+                    "text": f"Главный вывод: используйте эти идеи как основу для следующего шага по теме «{topic}».",
+                    "visual_prompt": f"cinematic closing shot summarizing {topic}",
+                },
+            ]
         result.setdefault("title", idea.get("title") or topic)
-        result.setdefault("hook", idea.get("hook") or (sections[0]["text"] if sections else ""))
+        result.setdefault("hook", idea.get("hook") or str(result["sections"][0].get("text") or ""))
         return result
 
