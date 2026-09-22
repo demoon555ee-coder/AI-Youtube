@@ -1605,6 +1605,23 @@ ALTER TABLE channels
         REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM anon, authenticated;
         REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM anon, authenticated;
         """,
+    ),
+    (
+        "035_enforce_content_version_json_defaults",
+        """
+        ALTER TABLE content_versions
+            ALTER COLUMN change_plan SET DEFAULT '{}'::jsonb,
+            ALTER COLUMN metrics_snapshot SET DEFAULT '{}'::jsonb;
+        UPDATE content_versions
+        SET change_plan = '{}'::jsonb
+        WHERE change_plan IS NULL;
+        UPDATE content_versions
+        SET metrics_snapshot = '{}'::jsonb
+        WHERE metrics_snapshot IS NULL;
+        ALTER TABLE content_versions
+            ALTER COLUMN change_plan SET NOT NULL,
+            ALTER COLUMN metrics_snapshot SET NOT NULL;
+        """,
     ),]
 
 
