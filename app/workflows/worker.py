@@ -153,7 +153,7 @@ class ObservableWorkflowWorker(EngineWorkflowWorker):
                     async with self.session_factory() as db:
                         project = await db.get(VideoProject, workflow.project_id)
                         if project:
-                            await self._event_for_db(db, workflow.id, project.id, 'workflow.started', {'worker_id': self.worker_id, 'attempt': workflow.attempt, 'trace_id': tracing.current_trace_id()})
+                            await self._event_for_db(db, workflow.id, project.id, 'workflow.started', {'worker_id': self.worker_id, 'attempt': workflow.attempt})
                             await db.commit()
                     async with self.session_factory() as db:
                         await Orchestrator(db).run_project(str(workflow.project_id), workflow_id=str(workflow.id))
