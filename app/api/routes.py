@@ -221,7 +221,11 @@ async def get_project_thumbnail(project_id: UUID, db: AsyncSession = Depends(get
     project = await db.get(VideoProject, project_id)
     if not project:
         raise HTTPException(404, "Project not found")
-    path = _safe_output_path((project.data or {}).get("thumbnail", {}).get("path"))
+    raw_path = (project.data or {}).get("thumbnail", {}).get("path")
+    if raw_path:
+        path = _safe_output_path(raw_path)
+    else:
+        path = _safe_output_path(str(Path(settings.output_dir) / str(project_id) / "thumbnail.png"))
     if not path.exists():
         raise HTTPException(404, "Thumbnail file does not exist")
     return FileResponse(path, media_type="image/png", filename=f"{project_id}-thumbnail.png")
