@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 from app.agents.real_agents import LLMResearchAgent, LLMScriptAgent
 from app.agents.scout import TopicScoutAgent
 from app.agents.storyboard import StoryboardAgent

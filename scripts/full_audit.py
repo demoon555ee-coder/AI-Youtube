@@ -1,5 +1,5 @@
 from __future__ import annotations
-import ast, json, pathlib, re, subprocess, sys
+import ast, json, pathlib, re, shutil, subprocess, sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
@@ -54,8 +54,21 @@ def migration_audit():
 def secret_scan() -> list[str]:
     hits=[]
     patterns=[re.compile(r'AIza[0-9A-Za-z_-]{20,}'), re.compile(r'-----BEGIN (?:RSA |EC )?PRIVATE KEY-----'), re.compile(r'(?i)sk-[A-Za-z0-9]{20,}')]
-    for f in ROOT.rglob('*'):
-        if not f.is_file() or any(part in {'node_modules','.git','.pytest_cache','__pycache__'} for part in f.parts): continue
+    tracked = None
+    try:
+        git_bin = shutil.which('git') or (r'C:\Program Files\Git\cmd\git.exe' if pathlib.Path(r'C:\Program Files\Git\cmd\git.exe').exists() else None)
+        if git_bin:
+            result = subprocess.run([git_bin, 'ls-files'], cwd=ROOT, capture_output=True, text=True, check=False)
+            if result.returncode == 0:
+                tracked = {ROOT / line.strip() for line in result.stdout.splitlines() if line.strip()}
+    except OSError:
+        tracked = None
+    if tracked is None:
+        files = (f for f in ROOT.rglob('*') if f.name != '.env' and not f.name.startswith('.env.') or f.name.endswith('.example'))
+    else:
+        files = tracked
+    for f in files:
+        if not f.is_file() or any(part in {'node_modules','.git','.pytest_cache','__pycache__','secrets'} for part in f.parts): continue
         if f.suffix.lower() in {'.pyc','.png','.mp4','.jpg','.jpeg','.wav','.mp3','.tar','.gz'}: continue
         try: text=f.read_text(errors='ignore')
         except Exception: continue
@@ -325,7 +338,7 @@ def control_plane_audit() -> dict:
         'planner_replan_limit': 'planner_max_retries' in planner,
         'governance_safe_unknown_action_default': 'CRITICAL' in governance and 'automation_mode": "block"' in governance,
         'governance_current_approval_version': 'approval_policy_version' in execution and 'approval_is_current' in execution,
-        'learning_authoritative_outcome_source': 'record_task_outcome' in learning and 'source_type == "agent_task"' in learning,
+        'learning_authoritative_outcome_source': 'record_task_outcome' in learning and 'source_type="agent_task"' in learning,
         'learning_forbids_governance_learning': 'FORBIDDEN_STRATEGY_KEYS' in learning and 'max_cost_usd' in learning and 'permissions' in learning,
         'learning_requires_human_activation': 'PENDING_APPROVAL' in learning and 'activated_by_user_id' in learning,
         'learning_api_does_not_accept_fabricated_observations': '@router.post("/channels/{channel_id}/observations")' not in learning_api,

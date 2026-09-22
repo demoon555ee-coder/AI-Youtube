@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 from typing import Any
 from app.agents.base import BaseAgent
 from app.providers.base import LLMProvider

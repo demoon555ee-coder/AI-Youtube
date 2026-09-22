@@ -38,13 +38,13 @@ Learning observes terminal task outcomes, proposes bounded strategy changes, and
 ## Verification boundary
 
 Verified in this isolated environment:
-- full Python test suite: **324 passed, 4 skipped**
-- Python compilation: **PASS**
-- frontend AST checks: **PASS**
-- E2E AST checks: **PASS**
-- internal import audit/static route audit/secret scan: **PASS**
-- migrations: **001 through 031**
-- dedicated control-plane audit: **PASS**
+- full Python test suite: **335 passed, 3 skipped**
+- Docker Compose Supabase staging configuration: **PASS**
+- Supabase schema/security staging verification script: **ready; live connection requires the local staging DB password**
+- Python compilation/static contracts: **PASS**
+- frontend/E2E AST checks: **PASS**
+- migrations: **001 through 034**
+- dedicated control-plane and learning integration tests: **PASS**
 
 Not executed here: a live PostgreSQL/asyncpg application boot, Docker deployment, external AI providers, YouTube OAuth, Stripe and production staging/E2E runtime. The environment does not contain `asyncpg` or installed frontend `node_modules`, so those checks remain deployment/staging gates rather than claims of local execution.
 

@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 from app.db.session import engine
 from app.models.base import Base
 from app import models  # noqa: F401

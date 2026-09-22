@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 
 from app.agents.factory import build_agent
 from app.agents.real_agents import LLMScriptAgent
