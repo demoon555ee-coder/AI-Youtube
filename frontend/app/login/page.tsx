@@ -39,11 +39,11 @@ export default function LoginPage() {
       <p className="sub">Protected multi-tenant workspaces for autonomous YouTube operations.</p>
       {error && <div className="error" style={{ marginBottom: 16 }}>{error}</div>}
       <form onSubmit={(e) => void submit(e)} className="stack">
-        <div className="field"><label>Email</label><input className="input" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} /></div>
-        <div className="field"><label>Password</label><input className="input" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={12} required value={password} onChange={e => setPassword(e.target.value)} /></div>
+        <div className="field"><label htmlFor="auth-email">Email</label><input id="auth-email" className="input" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} /></div>
+        <div className="field"><label htmlFor="auth-password">Password</label><input id="auth-password" className="input" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={12} required value={password} onChange={e => setPassword(e.target.value)} /></div>
         {mode === "register" && <>
-          <div className="field"><label>Name</label><input className="input" autoComplete="name" value={name} onChange={e => setName(e.target.value)} /></div>
-          <div className="field"><label>Organization</label><input className="input" value={organizationName} onChange={e => setOrganizationName(e.target.value)} /></div>
+          <div className="field"><label htmlFor="auth-name">Name</label><input id="auth-name" className="input" autoComplete="name" value={name} onChange={e => setName(e.target.value)} /></div>
+          <div className="field"><label htmlFor="auth-organization">Organization</label><input id="auth-organization" className="input" value={organizationName} onChange={e => setOrganizationName(e.target.value)} /></div>
         </>}
         <button className="btn primary" disabled={busy}>{busy ? "Working…" : mode === "login" ? "Sign in" : "Create account"}</button>
       </form>
