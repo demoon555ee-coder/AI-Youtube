@@ -27,6 +27,29 @@ def test_default_planner_pipeline_uses_scout_and_valid_scene_dependency():
 
 
 @pytest.mark.asyncio
+async def test_script_normalization_guarantees_sections_for_empty_provider_output():
+    agent = LLMScriptAgent(MockLLMProvider())
+    result = agent._normalize_script_result({}, "Test topic", {})
+    assert result["sections"]
+    assert result["sections"][0]["type"] == "intro"
+    assert result["sections"][-1]["type"] == "outro"
+    assert all(float(section["duration"]) >= 1.0 for section in result["sections"])
+
+
+def test_non_transient_editor_failure_keeps_render_provider_available_for_retry():
+    from types import SimpleNamespace
+    from app.models import AgentRun, RoutingDecision
+    from app.services.orchestrator import Orchestrator
+
+    run = SimpleNamespace(error_message="Storyboard contains no scenes", status="FAILED")
+    decision = SimpleNamespace(chosen_provider="ffmpeg")
+    assert Orchestrator._retry_excluded_provider(run, decision) is None
+
+    transient_run = SimpleNamespace(error_message="503 temporarily unavailable", status="FAILED")
+    assert Orchestrator._retry_excluded_provider(transient_run, decision) == "ffmpeg"
+
+
+@pytest.mark.asyncio
 async def test_pr1_scriptwriter_scene_output_maps_to_current_scene_graph():
     agent = LLMScriptAgent(MockLLMProvider())
     result = agent._normalize_script_result(
