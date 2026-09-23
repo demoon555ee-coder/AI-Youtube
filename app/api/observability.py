@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from sqlalchemy import select, text
@@ -15,6 +16,7 @@ from app.resilience.provider import ProviderReliabilityService
 from app.observability.access import metrics_token_matches
 
 router = APIRouter(prefix='/api/v1/observability', tags=['observability'])
+logger = logging.getLogger("youtube_ai_platform")
 
 
 @router.get('/providers')
@@ -53,8 +55,10 @@ async def database_ready() -> tuple[bool, str | None]:
                 await conn.execute(text('SELECT 1'))
         await asyncio.wait_for(_ping(), timeout=settings.readiness_timeout_seconds)
         return True, None
-    except Exception:
+    except Exception as exc:
+        logger.exception("database readiness check failed", exc_info=exc)
         return False, 'database unavailable'
+
 
 @router.get("/circuits")
 async def provider_circuits(request: Request, principal = Depends(enforce_request_authorization), db: AsyncSession = Depends(get_db)):
