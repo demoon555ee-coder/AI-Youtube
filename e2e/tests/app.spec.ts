@@ -9,7 +9,7 @@ test("full creator flow: register → channel → ideas → project → rendered
   const password = "Staging-Password-123!";
 
   await page.goto("/login");
-  await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
   await page.getByRole("button", { name: "Create a new account" }).click();
   await page.locator("#auth-email").fill(email);
   await page.locator("#auth-password").fill(password);
