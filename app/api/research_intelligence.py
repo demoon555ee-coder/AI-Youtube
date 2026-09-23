@@ -2,9 +2,20 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
+from app.auth.security import Principal, permission_dependency
+from app.models import Channel
 from app.research.graph_service import ResearchGraphService, graph_snapshot, list_opportunities, serialize_opportunity
 
 router = APIRouter(prefix="/api/v1/research-intelligence", tags=["research-intelligence"])
+
+
+async def _ensure_owned_channel(channel_id: str, db: AsyncSession, principal: Principal) -> None:
+    try:
+        channel = await db.get(Channel, channel_id)
+    except Exception as exc:
+        raise HTTPException(404, "Channel not found") from exc
+    if not channel or channel.owner_id != principal.scope_key:
+        raise HTTPException(404, "Channel not found")
 
 
 class ScanRequest(BaseModel):
@@ -15,7 +26,8 @@ class ScanRequest(BaseModel):
 
 
 @router.post("/channels/{channel_id}/scan")
-async def scan(channel_id: str, payload: ScanRequest, db: AsyncSession = Depends(get_db)):
+async def scan(channel_id: str, payload: ScanRequest, db: AsyncSession = Depends(get_db), principal: Principal = Depends(permission_dependency("research:write"))):
+    await _ensure_owned_channel(channel_id, db, principal)
     try:
         return await ResearchGraphService(provider_name=payload.provider).scan(
             db, channel_id=channel_id, query=payload.query,
@@ -26,7 +38,8 @@ async def scan(channel_id: str, payload: ScanRequest, db: AsyncSession = Depends
 
 
 @router.get("/channels/{channel_id}/opportunities")
-async def opportunities(channel_id: str, limit: int = 50, db: AsyncSession = Depends(get_db)):
+async def opportunities(channel_id: str, limit: int = 50, db: AsyncSession = Depends(get_db), principal: Principal = Depends(permission_dependency("read"))):
+    await _ensure_owned_channel(channel_id, db, principal)
     try:
         rows = await list_opportunities(db, channel_id, limit)
     except ValueError as exc:
@@ -35,7 +48,8 @@ async def opportunities(channel_id: str, limit: int = 50, db: AsyncSession = Dep
 
 
 @router.get("/channels/{channel_id}/graph")
-async def graph(channel_id: str, limit: int = 150, db: AsyncSession = Depends(get_db)):
+async def graph(channel_id: str, limit: int = 150, db: AsyncSession = Depends(get_db), principal: Principal = Depends(permission_dependency("read"))):
+    await _ensure_owned_channel(channel_id, db, principal)
     try:
         return await graph_snapshot(db, channel_id, limit)
     except ValueError as exc:
@@ -51,7 +65,8 @@ class GenerateIdeasRequest(BaseModel):
 
 
 @router.post("/channels/{channel_id}/opportunities/generate-ideas")
-async def generate_ideas_from_opportunities(channel_id: str, payload: GenerateIdeasRequest, db: AsyncSession = Depends(get_db)):
+async def generate_ideas_from_opportunities(channel_id: str, payload: GenerateIdeasRequest, db: AsyncSession = Depends(get_db), principal: Principal = Depends(permission_dependency("content:write"))):
+    await _ensure_owned_channel(channel_id, db, principal)
     try:
         rows = await generate_from_opportunities(
             db, channel_id=channel_id, opportunity_ids=payload.opportunity_ids,
