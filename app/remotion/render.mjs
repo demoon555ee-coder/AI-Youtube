@@ -3,6 +3,7 @@ import {getCompositions, renderMedia} from "@remotion/renderer";
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import {fileURLToPath} from "node:url";
 
 const args = process.argv.slice(2);
 
@@ -18,7 +19,7 @@ if (!inputPath) {
 
 const absoluteInput = path.resolve(inputPath);
 const manifest = JSON.parse(await fs.readFile(absoluteInput, "utf8"));
-const projectRoot = path.resolve(path.dirname(new URL(import.meta.url).pathname), ".");
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = manifest.publicDir ?? path.join(projectRoot, "public");
 
 await fs.mkdir(path.dirname(manifest.outputPath), {recursive: true});
