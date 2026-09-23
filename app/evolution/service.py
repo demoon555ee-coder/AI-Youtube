@@ -124,8 +124,22 @@ class ContentEvolutionService:
         editor = data.get("editor") or {}
         candidates.append(("video", editor.get("output_path"), {"source": "editor"}))
         candidates.append(("subtitles", editor.get("subtitle_path"), {"source": "editor"}))
+        candidates.append(("captions", editor.get("captions_path"), {"source": "editor"}))
+        candidates.append(("timeline", editor.get("timeline_path"), {"source": "editor"}))
         thumbnail = data.get("thumbnail") or {}
-        candidates.append(("thumbnail", thumbnail.get("path"), {"source": "thumbnail"}))
+        candidates.append(("thumbnail", thumbnail.get("path"), {"source": "thumbnail", "variant_id": "control"}))
+        candidates.append(("thumbnail_manifest", thumbnail.get("manifest_path"), {"source": "thumbnail"}))
+        for variant in thumbnail.get("variants") or []:
+            candidates.append((
+                "thumbnail_variant",
+                variant.get("path"),
+                {
+                    "source": "thumbnail",
+                    "variant_id": variant.get("variant_id"),
+                    "axis": variant.get("axis"),
+                    "provider": variant.get("provider"),
+                },
+            ))
         production = data.get("production") or {}
         candidates.append(("production_manifest", production.get("manifest_path"), {"source": "production"}))
         for asset in production.get("assets") or []:
