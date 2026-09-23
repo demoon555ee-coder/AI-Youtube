@@ -8,6 +8,7 @@ from app.media.http_image import HTTPImageProvider
 from app.media.http_video import HTTPVideoProvider
 from app.media.mock import MockVisualAssetProvider
 from app.media.openai_image import OpenAIImageProvider
+from app.media.runway_video import RunwayVideoProvider
 from app.media.stability_image import StabilityImageProvider
 
 
@@ -37,6 +38,15 @@ def get_visual_provider(provider_name: str | None = None, config: dict | None = 
     if name == "mock_video" or kind == "mock_video":
         from app.media.mock_video import MockVideoProvider
         return MockVideoProvider()
+    if name == "runway" or kind == "runway":
+        api_key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key") or settings.runway_api_key or settings.video_api_key)
+        return RunwayVideoProvider(
+            api_key=api_key,
+            base_url=str(cfg.get("base_url") or settings.video_endpoint or "https://api.dev.runwayml.com/v1"),
+            model=str(cfg.get("model") or settings.video_model or "gen4.5"),
+            poll_seconds=settings.video_poll_seconds,
+            timeout_seconds=settings.video_timeout_seconds,
+        )
     if name == "http_video" or kind == "http_video":
         endpoint = str(cfg.get("endpoint") or settings.video_endpoint)
         api_key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key") or settings.video_api_key)
