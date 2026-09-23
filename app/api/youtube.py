@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from urllib.parse import quote
+from uuid import UUID
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.models import Channel, VideoProject
+from app.models import Channel, VideoProject, YouTubeConnection
 from app.schemas.youtube import YouTubeOAuthStart, PublishRequest, AnalyticsRequest
+from app.services.audit import write_audit
 from app.services.youtube_service import create_oauth_url, finish_oauth, analytics, connection_status
 from app.config import settings
 from app.auth.security import Principal, get_current_principal, require_roles
@@ -43,6 +46,49 @@ async def youtube_status(channel_id: str, db: AsyncSession = Depends(get_db), pr
         return await connection_status(db, channel_id)
     except Exception as exc:
         raise HTTPException(status_code=404, detail=str(exc))
+
+
+@router.delete("/channels/{channel_id}/connection")
+async def youtube_disconnect(
+    channel_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    principal: Principal = Depends(require_roles({"owner", "admin"})),
+):
+    try:
+        cid = UUID(channel_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid channel id") from exc
+
+    channel = await db.get(Channel, cid)
+    if not channel:
+        raise HTTPException(status_code=404, detail="Channel not found")
+    if channel.organization_id is not None:
+        if channel.organization_id != principal.organization_id:
+            raise HTTPException(status_code=403, detail="Channel access denied")
+    elif channel.owner_id != principal.scope_key:
+        raise HTTPException(status_code=403, detail="Channel access denied")
+
+    connection = await db.scalar(select(YouTubeConnection).where(YouTubeConnection.channel_id == cid))
+    if connection:
+        await db.delete(connection)
+        await write_audit(
+            db,
+            request,
+            principal,
+            action="youtube.disconnect",
+            resource_type="channel",
+            resource_id=str(channel.id),
+            metadata={"youtube_channel_id": channel.youtube_channel_id},
+        )
+        await db.commit()
+
+    return {
+        "ok": True,
+        "channel_id": str(channel.id),
+        "youtube_channel_id": channel.youtube_channel_id,
+        "connected": False,
+    }
 
 
 @router.post("/channels/{channel_id}/publish", status_code=202)

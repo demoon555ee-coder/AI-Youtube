@@ -18,6 +18,7 @@ from app.models import (
     VideoProject,
     WorkflowRun,
     WorkflowStep,
+    YouTubeConnection,
 )
 from app.workflows.engine import WorkflowEngine
 from app.auth.security import Principal, get_current_principal, require_roles, permission_dependency
@@ -78,7 +79,19 @@ async def create_channel(payload: ChannelCreate, db: AsyncSession = Depends(get_
 
 @router.get("/channels")
 async def list_channels(db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
-    q = await db.execute(select(Channel).where(Channel.owner_id == principal.scope_key).order_by(Channel.created_at.desc()))
+    q = await db.execute(
+        select(Channel)
+        .where(
+            (Channel.organization_id == principal.organization_id)
+            | ((Channel.organization_id.is_(None)) & (Channel.owner_id == principal.scope_key))
+        )
+        .order_by(Channel.created_at.desc())
+    )
+    channels = list(q.scalars().all())
+    connection_rows = await db.execute(
+        select(YouTubeConnection.channel_id).where(YouTubeConnection.channel_id.in_([channel.id for channel in channels]))
+    ) if channels else None
+    connected_ids = {row[0] for row in connection_rows.all()} if connection_rows is not None else set()
     return {
         "channels": [
             {
@@ -87,8 +100,9 @@ async def list_channels(db: AsyncSession = Depends(get_db), principal: Principal
                 "niche": channel.niche,
                 "language": channel.language,
                 "youtube_channel_id": channel.youtube_channel_id,
+                "youtube_connected": channel.id in connected_ids,
             }
-            for channel in q.scalars().all()
+            for channel in channels
         ]
     }
 
