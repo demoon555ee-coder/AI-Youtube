@@ -59,6 +59,29 @@ class AssetFactory:
             output_path = project_dir / f"scene_{scene_no:03d}{'.mp4' if motion else '.png'}"
             metadata = {"scene": scene_no, "asset_type": scene.get("asset_type", "image")}
             metadata["idempotency_key"] = f"{self.media_job_context.get('project_id', project_id)}:{self.media_job_context.get('attempt', 1)}:{scene_no}"
+            if motion and provider.name == "runway":
+                source_image = str(
+                    scene.get("source_image")
+                    or scene.get("reference_image")
+                    or scene.get("image_path")
+                    or ""
+                ).strip()
+                if not source_image:
+                    seed_path = project_dir / f"seed_scene_{scene_no:03d}.png"
+                    seed_result = await self.image_provider.generate_scene_asset(
+                        prompt=visual_prompt,
+                        output_path=str(seed_path),
+                        width=1920,
+                        height=1080,
+                        duration_seconds=duration,
+                        metadata={
+                            "scene": scene_no,
+                            "asset_type": "image_seed",
+                            "purpose": "runway_first_frame",
+                        },
+                    )
+                    source_image = str(seed_result["path"])
+                metadata["image_path"] = source_image
             if motion and self.media_job_callback:
                 metadata["on_submitted"] = self.media_job_callback
             result = await provider.generate_scene_asset(
