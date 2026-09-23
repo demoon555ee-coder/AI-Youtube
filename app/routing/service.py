@@ -23,9 +23,10 @@ DEFAULTS: dict[str, list[dict[str, Any]]] = {
     ],
     "visual": [
         {"provider": "mock_png", "kind": "mock_png", "tier": "economy", "priority": 10, "unit": "asset", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
+        {"provider": "pexels_photo", "kind": "pexels_photo", "tier": "standard", "priority": 95, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True, "stock": True}},
         {"provider": "openai_image", "kind": "openai_image", "tier": "premium", "priority": 100, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
         {"provider": "http_image", "kind": "http_image", "tier": "standard", "priority": 80, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
-        {"provider": "stability_image", "kind": "stability_image", "tier": "premium", "priority": 110, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
+        {"provider": "stability_image", "kind": "stability_image", "tier": "premium", "priority": 110, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True, "generative": True}},
     ],
     "tts": [
         {"provider": "espeak", "kind": "espeak", "tier": "economy", "priority": 10, "unit": "minute", "unit_cost_usd": 0.0, "capabilities": {"voice": True}},
@@ -35,13 +36,15 @@ DEFAULTS: dict[str, list[dict[str, Any]]] = {
     "render": [{"provider": "ffmpeg", "kind": "ffmpeg", "tier": "economy", "priority": 10, "unit": "minute", "unit_cost_usd": 0.0, "capabilities": {"render": True}}],
     "image": [
         {"provider": "mock_png", "kind": "mock_png", "tier": "economy", "priority": 10, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
+        {"provider": "pexels_photo", "kind": "pexels_photo", "tier": "standard", "priority": 95, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True, "stock": True}},
         {"provider": "openai_image", "kind": "openai_image", "tier": "premium", "priority": 100, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
         {"provider": "http_image", "kind": "http_image", "tier": "standard", "priority": 80, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
     ],
     "video": [
         {"provider": "mock_video", "kind": "mock_video", "tier": "economy", "priority": 10, "unit": "second", "unit_cost_usd": 0.0, "capabilities": {"video": True}},
+        {"provider": "pexels_video", "kind": "pexels_video", "tier": "standard", "priority": 120, "unit": "second", "unit_cost_usd": 0.0, "capabilities": {"video": True, "stock_broll": True}},
         {"provider": "http_video", "kind": "http_video", "tier": "premium", "priority": 100, "unit": "second", "unit_cost_usd": 0.0, "capabilities": {"video": True}},
-        {"provider": "runway", "kind": "runway", "tier": "premium", "priority": 110, "unit": "second", "unit_cost_usd": 0.0, "capabilities": {"video": True}},
+        {"provider": "runway", "kind": "runway", "tier": "premium", "priority": 110, "unit": "second", "unit_cost_usd": 0.0, "capabilities": {"video": True, "generative": True}},
     ],
 }
 
@@ -77,6 +80,8 @@ class ProviderRouter:
             return bool((cfg.get("base_url") or settings.llm_base_url) and (key or settings.llm_api_key) and (cfg.get("model") or settings.llm_model))
         if candidate.kind == "stability_image":
             return bool(settings.stability_api_key or os.getenv("STABILITY_API_KEY", ""))
+        if candidate.kind == "pexels_photo" or candidate.kind == "pexels_video":
+            return bool(settings.pexels_api_key or os.getenv("PEXELS_API_KEY", ""))
         if candidate.kind == "openai_image":
             key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key", "") or settings.image_api_key or settings.llm_api_key)
             return bool((cfg.get("base_url") or cfg.get("endpoint") or settings.image_endpoint or "https://api.openai.com/v1") and (key or settings.image_api_key or settings.llm_api_key) and (cfg.get("model") or settings.image_model or "gpt-image-2"))
@@ -120,9 +125,6 @@ class ProviderRouter:
                     unit=r.unit, unit_cost_usd=r.unit_cost_usd, capabilities=r.capabilities or {}, config=r.config_json or {},
                 )),
             ) for r in rows]
-            # Always keep the first local/offline default as an escape hatch when
-            # custom provider profiles exist. A bad or unavailable profile must not make
-            # the portfolio unrecoverable in staging or offline operation.
             fallback_spec = DEFAULTS.get(service, [None])[0]
             if fallback_spec and not any(c.provider == fallback_spec["provider"] and c.runtime_available for c in result):
                 result.append(

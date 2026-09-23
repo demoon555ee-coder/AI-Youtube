@@ -25,3 +25,20 @@ def test_frontend_calls_async_project_run_with_live_updates():
     text = (ROOT / "frontend/app/projects/[id]/page.tsx").read_text()
     assert 'new EventSource' in text
     assert '`/api/v1/projects/${id}/run`' in text
+
+
+
+def test_stock_media_contract_is_present_and_attribution_is_preserved():
+    provider = (ROOT / "app/media/pexels.py").read_text()
+    factory = (ROOT / "app/media/factory.py").read_text()
+    router = (ROOT / "app/routing/service.py").read_text()
+    service = (ROOT / "app/media/service.py").read_text()
+
+    assert "class PexelsPhotoProvider" in provider
+    assert "class PexelsVideoProvider" in provider
+    assert "PEXELS_API_KEY" in provider
+    assert "PexelsPhotoProvider" in factory
+    assert "PexelsVideoProvider" in factory
+    assert '"pexels_video"' in router
+    assert '"stock_broll": True' in router
+    assert '"attribution": result.get("attribution")' in service

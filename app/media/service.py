@@ -11,8 +11,8 @@ class AssetFactory:
     """Build scene assets using routed image/video providers.
 
     The factory keeps image and video provider selection separate so a storyboard can
-    mix static scenes with generated motion/B-roll without coupling the workflow to a
-    single vendor.
+    mix static scenes, generated motion, and stock B-roll without coupling the workflow
+    to a single vendor. Provider attribution is preserved in the manifest for publishing.
     """
 
     def __init__(
@@ -105,6 +105,8 @@ class AssetFactory:
                     "transition": scene.get("transition", "cut"),
                     "duration_seconds": duration,
                     "external_job_id": result.get("external_job_id"),
+                    "source_url": result.get("source_url"),
+                    "attribution": result.get("attribution"),
                     "usage": result.get("usage", {}),
                     "status": result.get("status", "ready"),
                 }
@@ -117,6 +119,11 @@ class AssetFactory:
                 "video": self.video_provider.name,
             },
             "assets": assets,
+            "attribution": [
+                asset["attribution"]
+                for asset in assets
+                if asset.get("attribution")
+            ],
         }
         manifest_path = project_dir / "manifest.json"
         manifest_path.write_text(
@@ -127,4 +134,5 @@ class AssetFactory:
             "providers": manifest["providers"],
             "manifest_path": str(manifest_path),
             "assets": assets,
+            "attribution": manifest["attribution"],
         }

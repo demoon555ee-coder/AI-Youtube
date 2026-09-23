@@ -8,6 +8,7 @@ from app.media.http_image import HTTPImageProvider
 from app.media.http_video import HTTPVideoProvider
 from app.media.mock import MockVisualAssetProvider
 from app.media.openai_image import OpenAIImageProvider
+from app.media.pexels import PexelsPhotoProvider, PexelsVideoProvider
 from app.media.runway_video import RunwayVideoProvider
 from app.media.stability_image import StabilityImageProvider
 
@@ -28,6 +29,14 @@ def get_visual_provider(provider_name: str | None = None, config: dict | None = 
         api_key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else (str(cfg.get("api_key") or settings.stability_api_key) or "")
         endpoint = str(cfg.get("base_url") or cfg.get("endpoint") or settings.image_endpoint or "https://api.stability.ai")
         return StabilityImageProvider(api_key=api_key, base_url=endpoint)
+    if name == "pexels_photo" or kind == "pexels_photo":
+        api_key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key") or settings.pexels_api_key)
+        return PexelsPhotoProvider(
+            api_key=api_key,
+            base_url=str(cfg.get("base_url") or "https://api.pexels.com/v1"),
+            timeout_seconds=settings.readiness_timeout_seconds * 40,
+            cache_ttl_seconds=int(cfg.get("cache_ttl_seconds", 86400)),
+        )
     if name == "http_image" or kind == "http_image":
         endpoint = str(cfg.get("endpoint") or settings.visual_endpoint or settings.image_endpoint)
         if not endpoint:
@@ -38,6 +47,14 @@ def get_visual_provider(provider_name: str | None = None, config: dict | None = 
     if name == "mock_video" or kind == "mock_video":
         from app.media.mock_video import MockVideoProvider
         return MockVideoProvider()
+    if name == "pexels_video" or kind == "pexels_video":
+        api_key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key") or settings.pexels_api_key)
+        return PexelsVideoProvider(
+            api_key=api_key,
+            base_url=str(cfg.get("base_url") or "https://api.pexels.com/v1"),
+            timeout_seconds=settings.readiness_timeout_seconds * 40,
+            cache_ttl_seconds=int(cfg.get("cache_ttl_seconds", 86400)),
+        )
     if name == "runway" or kind == "runway":
         api_key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key") or settings.runway_api_key or settings.video_api_key)
         return RunwayVideoProvider(
