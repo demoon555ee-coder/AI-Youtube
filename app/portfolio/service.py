@@ -1,11 +1,15 @@
 from __future__ import annotations
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Channel
 from app.models.portfolio import Portfolio, PortfolioChannel, ProviderBudget, CostEvent
 from app.portfolio.intelligence import budget_status
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class PortfolioService:
@@ -106,7 +110,7 @@ class PortfolioService:
             ProviderBudget.service == service,
         ).with_for_update())
         if budget and budget.hard_limit:
-            now = datetime.utcnow()
+            now = _utcnow()
             month_start = datetime(now.year, now.month, 1)
             day_start = datetime(now.year, now.month, now.day)
             monthly_spend = float(await self.db.scalar(select(func.coalesce(func.sum(CostEvent.total_cost_usd), 0)).where(
