@@ -101,11 +101,19 @@ const pickColor = (index: number): string =>
 
 const SceneLayer: React.FC<{scene: Scene}> = ({scene}) => {
   const frame = useCurrentFrame();
-  const fade = interpolate(frame, [0, 10, scene.durationFrames - 10, scene.durationFrames], [0, 1, 1, 0], {
+  const fadeInEnd = Math.max(1, Math.min(10, Math.floor(scene.durationFrames / 3)));
+  const fadeOutStart = Math.max(fadeInEnd, scene.durationFrames - 10);
+  const fadeIn = interpolate(frame, [0, fadeInEnd], [0, 1], {
     easing: Easing.inOut(Easing.ease),
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
+  const fadeOut = interpolate(frame, [fadeOutStart, scene.durationFrames], [1, 0], {
+    easing: Easing.inOut(Easing.ease),
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const fade = Math.min(fadeIn, fadeOut);
   const scale = interpolate(frame, [0, scene.durationFrames], [1.02, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
