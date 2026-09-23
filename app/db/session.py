@@ -9,6 +9,12 @@ def _normalize_database_url(database_url: str) -> tuple[URL, bool]:
     if url.drivername in {"postgresql", "postgres"}:
         url = url.set(drivername="postgresql+asyncpg")
 
+    # Use Neon's direct read/write endpoint rather than the transaction pooler.
+    # asyncpg relies on prepared statements and can stall during startup when
+    # routed through the transaction pooler.
+    if url.host and "-pooler." in url.host:
+        url = url.set(hostname=url.host.replace("-pooler.", "."))
+
     query = dict(url.query)
     sslmode = str(query.pop("sslmode", "")).lower()
     query.pop("channel_binding", None)
@@ -20,6 +26,7 @@ def _normalize_database_url(database_url: str) -> tuple[URL, bool]:
 
 database_url, _use_ssl = _normalize_database_url(settings.database_url)
 connect_args = {"ssl": True, "timeout": 10} if _use_ssl else {"timeout": 10}
+
 engine = create_async_engine(
     database_url,
     connect_args=connect_args,
