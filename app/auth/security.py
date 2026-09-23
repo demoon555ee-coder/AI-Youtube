@@ -4,7 +4,7 @@ import hashlib
 import hmac
 import secrets
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Iterable
 from uuid import UUID
 from hmac import compare_digest
@@ -134,7 +134,7 @@ async def resolve_principal(request: Request, db: AsyncSession) -> Principal:
             return Principal(None, None, "owner", "dev-fallback", None, DEV_ORGANIZATION_KEY, frozenset({"*"}))
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     if credential.startswith("sess_"):
         token_hash = _hash_secret(credential)
         session = await db.scalar(
@@ -244,7 +244,7 @@ async def create_session(db: AsyncSession, user_id: UUID, ttl_days: int = 30) ->
     session = AuthSession(
         user_id=user_id,
         token_hash=digest,
-        expires_at=datetime.utcnow() + timedelta(days=ttl_days),
+        expires_at=datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=ttl_days),
     )
     issue_session_csrf_token(session)
     db.add(session)
