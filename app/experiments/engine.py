@@ -43,6 +43,22 @@ class ExperimentEngine:
             "variant_a": self._variant_a(dimension, base_title, base_hook),
             "variant_b": self._variant_b(dimension, base_title, base_hook),
         }
+        if dimension == "thumbnail" and project:
+            thumbnail = (project.data or {}).get("thumbnail") or {}
+            physical_variants = thumbnail.get("variants") or []
+            by_id = {
+                str(item.get("variant_id")): item
+                for item in physical_variants
+                if item.get("variant_id")
+            }
+            for key, item in by_id.items():
+                if key in variants:
+                    variants[key] = {
+                        **variants[key],
+                        "artifact_path": item.get("path"),
+                        "artifact_media_type": item.get("media_type"),
+                        "variant_axis": item.get("axis"),
+                    }
         hypothesis = hypotheses[0] if hypotheses else "A targeted packaging or structure change may improve the observed weak signal."
         return {
             "dimension": dimension,
