@@ -31,7 +31,7 @@ def test_v30_orchestration_routes_real_media_and_tts():
 
 def test_v30_current_configuration_is_versioned():
     config = (ROOT / "app/config.py").read_text()
-    assert 'app_version: str = "4.2.1"' in config
+    assert 'app_version: str = "4.2.4"' in config
     env = (ROOT / ".env.example").read_text()
     assert 'VIDEO_PROVIDER=' in env
     assert 'TTS_PROVIDER=' in env
