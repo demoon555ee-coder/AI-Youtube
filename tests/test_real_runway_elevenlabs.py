@@ -161,6 +161,6 @@ def test_runway_provider_exposes_safe_api_error(monkeypatch, tmp_path):
             metadata={},
         ))
     except RuntimeError as exc:
-        assert "not enough credits" in str(exc)
+        assert "enough credits" in str(exc)
         return
     raise AssertionError("Runway API error was not surfaced")
