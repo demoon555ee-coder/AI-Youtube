@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 
 from app.db.session import SessionLocal
-from app.auth.security import Principal, get_current_principal, permission_dependency
+from app.auth.security import Principal, permission_dependency
 from app.models import Channel, WorkflowEvent, WorkflowRun, WorkflowStep, VideoProject
 
 router = APIRouter(prefix="/api/v1/workflows", tags=["workflows"])
