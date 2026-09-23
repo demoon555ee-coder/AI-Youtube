@@ -77,7 +77,44 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           <button className="btn" style={{marginTop:10,width:"100%"}} onClick={()=>void logout()}>Sign out</button>
         </div>
       </aside>
-      <main className="main">{children}</main>
+      <main className="main">
+        <header className="workspaceTopbar">
+          <div className="workspaceIdentity">
+            <Link href="/onboarding/channels" className="workspaceAvatar" title="Change channel">
+              {activeChannel?.name?.slice(0, 1).toUpperCase() || "Y"}
+            </Link>
+            <div className="workspaceIdentityText">
+              <span className="mini">Active channel</span>
+              <Link href="/onboarding/channels" className="workspaceChannelName">
+                {activeChannel?.name || "Choose channel"} <span aria-hidden="true">⌄</span>
+              </Link>
+            </div>
+            <span className="channelConnected">Connected</span>
+          </div>
+          <div className="workspaceTopActions">
+            {channels.length > 1 && (
+              <select
+                className="workspaceChannelSelect"
+                value={activeChannel?.id || ""}
+                aria-label="Switch channel"
+                onChange={event => {
+                  const id = event.target.value;
+                  const chosen = channels.find(channel => channel.id === id);
+                  if (!chosen) return;
+                  storeChannelId(chosen.id);
+                  setActiveChannel(chosen);
+                  router.refresh();
+                }}
+              >
+                {channels.map(channel => <option key={channel.id} value={channel.id}>{channel.name}</option>)}
+              </select>
+            )}
+            <Link href="/onboarding/channels" className="btn">Manage channels</Link>
+            <Link href="/settings" className="workspaceUser" title="Settings">⚙</Link>
+          </div>
+        </header>
+        {children}
+      </main>
     </div>
   );
 }
