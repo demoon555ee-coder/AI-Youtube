@@ -22,9 +22,9 @@ DEFAULTS: dict[str, list[dict[str, Any]]] = {
         {"provider": "http_json", "kind": "http_json", "tier": "standard", "priority": 100, "unit": "request", "unit_cost_usd": 0.0, "capabilities": {"search": True}},
     ],
     "visual": [
-        {"provider": "mock_png", "kind": "mock_png", "tier": "economy", "priority": 10, "unit": "asset", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
+        {"provider": "mock_png", "kind": "mock_png", "tier": "economy", "priority": 10, "unit": "asset", "unit_cost_usd": 0.0, "capabilities": {"image": True, "generative": True}},
         {"provider": "pexels_photo", "kind": "pexels_photo", "tier": "standard", "priority": 95, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True, "stock": True}},
-        {"provider": "openai_image", "kind": "openai_image", "tier": "premium", "priority": 100, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
+        {"provider": "openai_image", "kind": "openai_image", "tier": "premium", "priority": 100, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True, "generative": True}},
         {"provider": "http_image", "kind": "http_image", "tier": "standard", "priority": 80, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
         {"provider": "stability_image", "kind": "stability_image", "tier": "premium", "priority": 110, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True, "generative": True}},
     ],
@@ -35,13 +35,13 @@ DEFAULTS: dict[str, list[dict[str, Any]]] = {
     ],
     "render": [{"provider": "ffmpeg", "kind": "ffmpeg", "tier": "economy", "priority": 10, "unit": "minute", "unit_cost_usd": 0.0, "capabilities": {"render": True}}],
     "image": [
-        {"provider": "mock_png", "kind": "mock_png", "tier": "economy", "priority": 10, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
+        {"provider": "mock_png", "kind": "mock_png", "tier": "economy", "priority": 10, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True, "generative": True}},
         {"provider": "pexels_photo", "kind": "pexels_photo", "tier": "standard", "priority": 95, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True, "stock": True}},
-        {"provider": "openai_image", "kind": "openai_image", "tier": "premium", "priority": 100, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
+        {"provider": "openai_image", "kind": "openai_image", "tier": "premium", "priority": 100, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True, "generative": True}},
         {"provider": "http_image", "kind": "http_image", "tier": "standard", "priority": 80, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
     ],
     "video": [
-        {"provider": "mock_video", "kind": "mock_video", "tier": "economy", "priority": 10, "unit": "second", "unit_cost_usd": 0.0, "capabilities": {"video": True}},
+        {"provider": "mock_video", "kind": "mock_video", "tier": "economy", "priority": 10, "unit": "second", "unit_cost_usd": 0.0, "capabilities": {"video": True, "generative": True}},
         {"provider": "pexels_video", "kind": "pexels_video", "tier": "standard", "priority": 120, "unit": "second", "unit_cost_usd": 0.0, "capabilities": {"video": True, "stock_broll": True}},
         {"provider": "http_video", "kind": "http_video", "tier": "premium", "priority": 100, "unit": "second", "unit_cost_usd": 0.0, "capabilities": {"video": True}},
         {"provider": "runway", "kind": "runway", "tier": "premium", "priority": 110, "unit": "second", "unit_cost_usd": 0.0, "capabilities": {"video": True, "generative": True}},
