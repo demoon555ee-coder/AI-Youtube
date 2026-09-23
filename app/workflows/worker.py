@@ -27,6 +27,11 @@ from app.workflows.agent_worker import AgentTaskWorker
 logger = logging.getLogger(__name__)
 
 
+def _utcnow() -> datetime:
+    """Return naive UTC for compatibility with existing TIMESTAMP columns."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 async def _billing_webhook_loop() -> None:
     while True:
         async with SessionLocal() as db:
@@ -189,7 +194,7 @@ class ObservableWorkflowWorker(EngineWorkflowWorker):
                 run = await db.get(WorkflowRun, workflow_id)
                 if not run or run.status != 'RUNNING' or run.worker_id != self.worker_id:
                     return
-                run.lease_until = datetime.utcnow() + timedelta(seconds=self.lease_seconds)
+                run.lease_until = _utcnow() + timedelta(seconds=self.lease_seconds)
                 run.updated_at = datetime.utcnow()
                 await db.commit()
             await self.heartbeat(status='RUNNING', active_workflow_id=workflow_id)
