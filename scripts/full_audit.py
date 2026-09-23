@@ -132,7 +132,7 @@ def production_ai_audit() -> dict:
     orchestration = (ROOT / 'app/services/orchestrator.py').read_text()
     env = (ROOT / '.env.production.example').read_text()
     return {
-        'current_version_config': bool(re.search(r'app_version: str = \"[0-9]+\\.[0-9]+\\.[0-9]+\"', cfg)),
+        'current_version_config': bool(re.search(r'app_version: str = "[0-9]+\.[0-9]+\.[0-9]+"', cfg)),
         'image_provider_config': 'image_provider:' in cfg and 'image_model:' in cfg,
         'video_provider_config': 'video_provider:' in cfg and 'video_timeout_seconds:' in cfg,
         'tts_provider_config': 'tts_provider:' in cfg and 'tts_model:' in cfg,
