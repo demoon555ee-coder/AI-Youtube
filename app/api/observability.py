@@ -5,12 +5,13 @@ import logging
 from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.db.session import engine, SessionLocal
 from app.db.session import get_db
 from app.auth.authorization import enforce_request_authorization
-from app.models import WorkerHeartbeat, WorkflowDeadLetter, MediaGenerationJob
+from app.models import Channel, MediaGenerationJob, VideoProject, WorkerHeartbeat, WorkflowDeadLetter
 from app.observability.provider_health import ProviderHealthService
 from app.resilience.provider import ProviderReliabilityService
 from app.observability.access import metrics_token_matches
