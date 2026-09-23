@@ -13,15 +13,20 @@ def youtube_analytics_api(credentials: Credentials):
     return build("youtubeAnalytics", "v2", credentials=credentials, cache_discovery=False)
 
 
-def get_mine_channel(credentials: Credentials) -> dict:
+def get_mine_channels(credentials: Credentials) -> list[dict]:
     result = youtube_data_api(credentials).channels().list(
         part="id,snippet,contentDetails,statistics",
         mine=True,
+        maxResults=50,
     ).execute()
     items = result.get("items", [])
     if not items:
         raise RuntimeError("No YouTube channel found for authenticated account")
-    return items[0]
+    return items
+
+
+def get_mine_channel(credentials: Credentials) -> dict:
+    return get_mine_channels(credentials)[0]
 
 
 def upload_video(

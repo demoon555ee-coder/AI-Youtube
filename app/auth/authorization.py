@@ -27,6 +27,8 @@ PUBLIC_SUFFIXES = {
     "/api/v1/auth/register",
     "/api/v1/auth/login",
     "/api/v1/youtube/oauth/callback",
+    "/api/v1/auth/google/start",
+    "/api/v1/auth/google/callback",
     "/api/v1/billing/webhooks",
     "/api/v1/health/live",
     "/api/v1/health/ready",

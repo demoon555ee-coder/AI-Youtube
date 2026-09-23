@@ -5,6 +5,7 @@ let csrfToken: string | null = null;
 const CSRF_EXEMPT_PREFIXES = [
   "/api/v1/auth/register",
   "/api/v1/auth/login",
+  "/api/v1/auth/google/start",
   "/api/v1/billing/webhooks",
 ];
 

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -49,7 +49,8 @@ async def finish_oauth(db: AsyncSession, callback_url: str, state: str):
     oauth_state = q.scalar_one_or_none()
     if not oauth_state:
         raise RuntimeError("Invalid or expired OAuth state")
-    if datetime.utcnow() - oauth_state.created_at > timedelta(seconds=settings.oauth_state_ttl_seconds):
+    now = datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0)
+    if now - oauth_state.created_at > timedelta(seconds=settings.oauth_state_ttl_seconds):
         await db.delete(oauth_state)
         await db.commit()
         raise RuntimeError("OAuth state expired")
@@ -58,62 +59,76 @@ async def finish_oauth(db: AsyncSession, callback_url: str, state: str):
     if not creds.refresh_token:
         raise RuntimeError("No refresh token returned by Google")
 
-    channel_data = get_mine_channel(creds)
-    yt_id = channel_data["id"]
-    title = channel_data["snippet"]["title"]
-
-    q = await db.execute(select(Channel).where(Channel.youtube_channel_id == yt_id))
-    channel = q.scalar_one_or_none()
+    from app.services.youtube_client import get_mine_channels
+    channel_items = get_mine_channels(creds)
     organization_id = None
     try:
         organization_id = uuid.UUID(oauth_state.owner_id)
     except (ValueError, AttributeError):
-        organization_id = None
+        pass
+    if organization_id is None:
+        raise RuntimeError("OAuth state has no valid organization")
 
-    if not channel:
-        channel = Channel(
-            owner_id=oauth_state.owner_id,
-            organization_id=organization_id,
-            youtube_channel_id=yt_id,
-            name=title,
-        )
-        db.add(channel)
-        await db.flush()
-    else:
-        # A YouTube channel is globally identifiable and must never be reassigned
-        # from one organization to another by a new OAuth flow.
-        if channel.organization_id and organization_id and channel.organization_id != organization_id:
-            raise RuntimeError("YouTube channel is already connected to another organization")
-        if not channel.organization_id and channel.owner_id != oauth_state.owner_id:
-            raise RuntimeError("YouTube channel is already connected to another owner")
-        channel.organization_id = organization_id or channel.organization_id
-        channel.owner_id = oauth_state.owner_id
-        channel.name = title
-
-    q = await db.execute(select(YouTubeConnection).where(YouTubeConnection.channel_id == channel.id))
-    conn = q.scalar_one_or_none()
     expiry = creds.expiry.replace(tzinfo=None) if creds.expiry else None
     encrypted_access = encrypt(creds.token or "")
     encrypted_refresh = encrypt(creds.refresh_token)
     scope = " ".join(creds.scopes or [])
-    if not conn:
-        conn = YouTubeConnection(
-            channel_id=channel.id,
-            access_token_enc=encrypted_access,
-            refresh_token_enc=encrypted_refresh,
-            token_expiry=expiry,
-            scope=scope,
-        )
-        db.add(conn)
-    else:
-        conn.access_token_enc = encrypted_access
-        conn.refresh_token_enc = encrypted_refresh
-        conn.token_expiry = expiry
-        conn.scope = scope
+    connected: list[dict] = []
+
+    for channel_data in channel_items:
+        yt_id = channel_data["id"]
+        title = channel_data["snippet"]["title"]
+        q = await db.execute(select(Channel).where(Channel.youtube_channel_id == yt_id))
+        channel = q.scalar_one_or_none()
+
+        if not channel:
+            channel = Channel(
+                owner_id=oauth_state.owner_id,
+                organization_id=organization_id,
+                youtube_channel_id=yt_id,
+                name=title,
+            )
+            db.add(channel)
+            await db.flush()
+        else:
+            if channel.organization_id and channel.organization_id != organization_id:
+                continue
+            if not channel.organization_id and channel.owner_id != oauth_state.owner_id:
+                continue
+            channel.organization_id = organization_id
+            channel.owner_id = oauth_state.owner_id
+            channel.name = title
+
+        q = await db.execute(select(YouTubeConnection).where(YouTubeConnection.channel_id == channel.id))
+        conn = q.scalar_one_or_none()
+        if not conn:
+            db.add(YouTubeConnection(
+                channel_id=channel.id,
+                access_token_enc=encrypted_access,
+                refresh_token_enc=encrypted_refresh,
+                token_expiry=expiry,
+                scope=scope,
+            ))
+        else:
+            conn.access_token_enc = encrypted_access
+            conn.refresh_token_enc = encrypted_refresh
+            conn.token_expiry = expiry
+            conn.scope = scope
+
+        connected.append({
+            "id": str(channel.id),
+            "youtube_channel_id": yt_id,
+            "name": title,
+            "thumbnail_url": channel_data.get("snippet", {}).get("thumbnails", {}).get("high", {}).get("url")
+                or channel_data.get("snippet", {}).get("thumbnails", {}).get("default", {}).get("url"),
+            "subscriber_count": int(channel_data.get("statistics", {}).get("subscriberCount", 0) or 0),
+        })
 
     await db.delete(oauth_state)
     await db.commit()
-    return {"channel_id": str(channel.id), "youtube_channel_id": yt_id, "name": title}
+    if not connected:
+        raise RuntimeError("No YouTube channels could be linked to this organization")
+    return {"channel_id": connected[0]["id"], "channels": connected}
 
 
 async def connection_status(db: AsyncSession, channel_id: str) -> dict:

@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     google_client_secrets_file: str = "/app/secrets/client_secret.json"
     google_client_secrets_json: str = ""
     oauth_redirect_path: str = "/api/v1/youtube/oauth/callback"
+    google_auth_redirect_path: str = "/api/v1/auth/google/callback"
     oauth_state_ttl_seconds: int = 600
     app_encryption_key: str = ""
     auth_dev_fallback: bool = True
@@ -155,6 +156,10 @@ class Settings(BaseSettings):
     @property
     def oauth_redirect_uri(self) -> str:
         return self.public_base_url.rstrip("/") + self.oauth_redirect_path
+
+    @property
+    def google_auth_redirect_uri(self) -> str:
+        return self.public_base_url.rstrip("/") + self.google_auth_redirect_path
 
     @property
     def allowed_origins(self) -> list[str]:
