@@ -25,7 +25,7 @@ async def _get_owned_workflow(workflow_id: UUID, principal: Principal) -> Workfl
         if not project:
             raise HTTPException(404, "Workflow not found")
         channel = await db.get(Channel, project.channel_id)
-        if not channel or channel.owner_id != principal.scope_key:
+        if not channel or ((channel.organization_id is not None and channel.organization_id != principal.organization_id) or (channel.organization_id is None and channel.owner_id != principal.scope_key)):
             raise HTTPException(404, "Workflow not found")
         return run
 
@@ -40,7 +40,7 @@ async def get_workflow(workflow_id: UUID, principal: Principal = Depends(permiss
         if not project:
             raise HTTPException(404, "Workflow not found")
         channel = await db.get(Channel, project.channel_id)
-        if not channel or channel.owner_id != principal.scope_key:
+        if not channel or ((channel.organization_id is not None and channel.organization_id != principal.organization_id) or (channel.organization_id is None and channel.owner_id != principal.scope_key)):
             raise HTTPException(404, "Workflow not found")
         q = await db.execute(
             select(WorkflowStep).where(WorkflowStep.workflow_run_id == workflow_id).order_by(WorkflowStep.step_order)
@@ -83,7 +83,7 @@ async def cancel_workflow(workflow_id: UUID, principal: Principal = Depends(perm
         if not project:
             raise HTTPException(404, "Workflow not found")
         channel = await db.get(Channel, project.channel_id)
-        if not channel or channel.owner_id != principal.scope_key:
+        if not channel or ((channel.organization_id is not None and channel.organization_id != principal.organization_id) or (channel.organization_id is None and channel.owner_id != principal.scope_key)):
             raise HTTPException(404, "Workflow not found")
         if run.status in {"COMPLETED", "FAILED", "CANCELLED"}:
             return {"id": str(run.id), "status": run.status, "cancelled": False}
