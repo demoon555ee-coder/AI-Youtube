@@ -1,5 +1,12 @@
 # Changelog
 
+## 4.2.2 — Pexels Stock Media Routing
+- Added Pexels photo and video providers with search, media selection, download validation and retry handling.
+- Added 24-hour in-process search caching to reduce repeated Pexels API calls.
+- Added stock B-roll routing capability while keeping Stability/Runway available for generative production paths.
+- Preserved Pexels source URLs and creator attribution in the asset manifest for downstream publishing.
+- Added production validation for PEXELS_API_KEY and regression/static coverage for the new providers.
+
 ## 4.2.1 — Agent Control Plane Correction
 - Corrected the v4.0–v4.2 control-plane lifecycle after a full logic audit.
 - Agent task admission now uses the same governance authority at creation and immediately before execution.
