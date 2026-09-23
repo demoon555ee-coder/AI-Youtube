@@ -24,6 +24,7 @@ function ChannelOnboardingContent() {
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("My YouTube Workspace");
   const [newNiche, setNewNiche] = useState("AI technology");
+  const [showCreateYouTube, setShowCreateYouTube] = useState(false);
 
   async function load() {
     try {
@@ -56,6 +57,7 @@ function ChannelOnboardingContent() {
   }
 
   async function connectAnotherGoogleAccount() {
+    setError("");
     setBusy(true);
     try {
       const r = await apiPost<{ authorization_url: string }>("/api/v1/auth/google/start");
@@ -64,6 +66,11 @@ function ChannelOnboardingContent() {
       setError(e instanceof Error ? e.message : "Unable to start Google authorization");
       setBusy(false);
     }
+  }
+
+  function openYouTubeCreator() {
+    window.open("https://www.youtube.com/channel_switcher", "_blank", "noopener,noreferrer");
+    setShowCreateYouTube(false);
   }
   async function createWorkspace() {
     setError("");
@@ -93,9 +100,9 @@ function ChannelOnboardingContent() {
   return <main className="channelSetup">
     <section className="channelSetupHero">
       <div className="authBrand"><span className="authBrandMark" /><span>YouTube AI</span></div>
-      <div className="kicker">Choose your workspace</div>
-      <h1>Which channel are we working on?</h1>
-      <p className="sub">Your Google authorization is complete. Choose the YouTube channel the AI team should use as its current workspace.</p>
+      <div className="kicker">Your YouTube accounts</div>
+      <h1>Choose the channel we will operate.</h1>
+      <p className="sub">Google is connected. We loaded every YouTube channel available to this account. Pick one to make it the active AI workspace.</p>
       {search.get("google") === "connected" && <div className="notice" style={{ marginTop: 18 }}>Google connected. We found {channels.length} available channel{channels.length === 1 ? "" : "s"}.</div>}
       {error && <div className="error" style={{ marginTop: 18 }}>{error}</div>}
     </section>
@@ -109,28 +116,42 @@ function ChannelOnboardingContent() {
           <div className="channelCardBody">
             <div className="channelCardTitle">{channel.name}</div>
             <div className="mini">{channel.niche || "YouTube channel"}{youtubeId}</div>
-            <div className="channelCardMeta"><span>{channel.youtube_channel_id ? "Connected to YouTube" : "Platform workspace"}</span><span>{selectedLabel}</span></div>
+            <div className="channelCardMeta"><span>{channel.youtube_channel_id ? <span className="channelConnected">Connected</span> : "Platform workspace"}</span><span>{selectedLabel}</span></div>
           </div>
         </button>;
       })}
-      <button className="channelCreateCard" onClick={() => setCreateOpen(true)}>
+      <button className="channelCreateCard" onClick={() => setShowCreateYouTube(true)}>
         <span className="channelCreatePlus">+</span>
-        <strong>Create a new workspace</strong>
-        <span className="mini">A separate AI operating workspace for a channel</span>
-      </button>
-      <a className="channelCreateCard" href="https://www.youtube.com/channel_switcher" target="_blank" rel="noreferrer">
-        <span className="channelCreatePlus">↗</span>
         <strong>Create a new YouTube channel</strong>
-        <span className="mini">Open YouTube and create the channel, then connect it here</span>
-      </a>
+        <span className="mini">Create the channel in YouTube, then bring it into this workspace.</span>
+      </button>
+      <button className="channelCreateCard" onClick={() => setCreateOpen(true)}>
+        <span className="channelCreatePlus">✦</span>
+        <strong>Create a separate AI workspace</strong>
+        <span className="mini">Keep another channel's strategy, projects and governance separate.</span>
+      </button>
     </section>
     <section className="channelSetupActions">
       <div className="channelSetupSecondary">
-        <button className="btn" disabled={busy} onClick={() => void connectAnotherGoogleAccount()}>Connect another Google account</button>
-        <span className="mini">Google's account chooser lets you switch accounts without signing out.</span>
+        <button className="btn" disabled={busy} onClick={() => void connectAnotherGoogleAccount()}>Change Google account</button>
+        <span className="mini">The Google account chooser opens again, then we reload that account's YouTube channels.</span>
       </div>
       <button className="btn primary" disabled={!selected || busy} onClick={continueToStudio}>Continue to Dashboard →</button>
     </section>
+
+    {showCreateYouTube && <div className="modalBackdrop" onClick={() => setShowCreateYouTube(false)}>
+      <div className="modalCard" onClick={e => e.stopPropagation()}>
+        <div className="cardTitle"><div><div className="kicker">New YouTube channel</div><h2>Create it in YouTube</h2></div><button className="btn" onClick={() => setShowCreateYouTube(false)}>Close</button></div>
+        <p className="sub">YouTube creates the actual channel. We only manage the AI workspace and connect it after Google gives us access.</p>
+        <div className="stack" style={{ marginTop: 18 }}>
+          <div className="notice">1. Open YouTube's channel switcher and create the new channel. 2. Return here. 3. Choose <strong>Change Google account</strong> so we re-read the channels from Google.</div>
+          <div className="actions">
+            <button className="btn primary" onClick={openYouTubeCreator}>Open YouTube</button>
+            <button className="btn" onClick={() => { setShowCreateYouTube(false); void connectAnotherGoogleAccount(); }}>Create and connect</button>
+          </div>
+        </div>
+      </div>
+    </div>}
 
     {createOpen && <div className="modalBackdrop" onClick={() => setCreateOpen(false)}>
       <div className="modalCard" onClick={e => e.stopPropagation()}>

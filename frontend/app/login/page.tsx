@@ -24,7 +24,7 @@ export default function LoginPage() {
         ? { email, password }
         : { email, password, name, organization_name: organizationName };
       await apiPost(path, body);
-      router.push("/");
+      router.push("/onboarding/channels?source=email");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Authentication failed");
     } finally {

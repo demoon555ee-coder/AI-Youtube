@@ -107,11 +107,31 @@ export default function Dashboard() {
         </div>}
       </div>
 
-      <div className="grid grid2">
-        <div className="panel"><div className="cardTitle"><h2>Recent projects</h2><Link href="/projects" className="btn">View all</Link></div>
-          {dashboard.projects.length === 0 ? <div className="empty">No projects yet.</div> : dashboard.projects.slice(0,5).map(p => <div className="idea" key={p.id}><div className="ideaText"><strong>{p.title || p.topic}</strong><small>{p.status}</small></div><Link href={`/projects/${p.id}`} className="btn">Open</Link></div>)}
-        </div>
-        <div className="panel"><div className="cardTitle"><h2>Channel Brain</h2><Link href="/brain" className="btn">Open</Link></div><p className="sub">Learned patterns are fed back into Idea and Script Agents.</p><div style={{marginTop:18}} className="stack"><div><span className="label">Automation loop</span><div style={{marginTop:6}}>Analytics → diagnosis → memory → next idea</div></div><div><span className="label">YouTube</span><div style={{marginTop:6}}>{dashboard.channel.youtube_channel_id ? "Connected" : "Not connected yet"}</div></div></div></div>
+      <div className="pinBoard">
+        <article className="pinCard">
+          <div className="pinMedia persimmon"><strong style={{fontSize:24,letterSpacing:"-.03em"}}>Build the next video.</strong></div>
+          <div className="pinBody"><strong>Content Factory</strong><p>Turn a research-backed idea into a governed production workflow.</p><div style={{marginTop:12}}><Link href="/ideas" className="btn primary">Start from idea →</Link></div></div>
+        </article>
+        <article className="pinCard">
+          <div className="pinMedia blue"><strong style={{fontSize:24,letterSpacing:"-.03em"}}>{active?.status || "No active run"}</strong></div>
+          <div className="pinBody"><strong>Active pipeline</strong><p>{active ? "Your current project is moving through the production graph." : "Start a project to activate the pipeline."}</p><div style={{marginTop:12}}><Link href={active ? `/projects/${active.id}` : "/ideas"} className="btn">{active ? "Open project" : "Create project"}</Link></div></div>
+        </article>
+        <article className="pinCard">
+          <div className="pinMedia jade"><strong style={{fontSize:24,letterSpacing:"-.03em"}}>{dashboard.metrics.subscribers_net >= 0 ? "+" : ""}{format(dashboard.metrics.subscribers_net)}</strong></div>
+          <div className="pinBody"><strong>Channel growth</strong><p>Net subscribers from the analytics layer for this selected channel.</p><div style={{marginTop:12}}><Link href="/analytics" className="btn">Open analytics</Link></div></div>
+        </article>
+        <article className="pinCard">
+          <div className="pinMedia wasabi"><strong style={{fontSize:22,letterSpacing:"-.03em"}}>{dashboard.projects.length} projects</strong></div>
+          <div className="pinBody"><strong>Production library</strong><p>Browse previous ideas, drafts, renders and publish states for this workspace.</p><div style={{marginTop:12}}><Link href="/projects" className="btn">View projects</Link></div></div>
+        </article>
+        <article className="pinCard">
+          <div className="pinMedia plum"><strong style={{fontSize:22,letterSpacing:"-.03em"}}>Channel Brain</strong></div>
+          <div className="pinBody"><strong>Learning loop</strong><p>Analytics → diagnosis → memory → next idea, while governance remains in control.</p><div style={{marginTop:12}}><Link href="/brain" className="btn">Open brain</Link></div></div>
+        </article>
+        <article className="pinCard">
+          <div className="pinMedia blue"><strong style={{fontSize:22,letterSpacing:"-.03em"}}>Media stack</strong></div>
+          <div className="pinBody"><strong>Provider routing</strong><p>See which video, image and voice providers are available for the next production.</p><div style={{marginTop:12}}><Link href="/routing" className="btn">Open routing</Link></div></div>
+        </article>
       </div>
     </>}
   </Shell>;
