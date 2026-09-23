@@ -44,6 +44,7 @@ class RemotionRenderer:
         manifest_path = project_dir / "remotion_manifest.json"
         output_path = project_dir / "final.mp4"
         srt_path = project_dir / "subtitles.srt"
+        captions_path = project_dir / "captions.json"
 
         project_dir.mkdir(parents=True, exist_ok=True)
         if public_dir.exists():
@@ -147,6 +148,10 @@ class RemotionRenderer:
             encoding="utf-8",
         )
         write_srt(srt_path, subtitle_rows)
+        captions_path.write_text(
+            json.dumps(captions, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
 
         await self._run_remotion(manifest_path)
 
@@ -161,6 +166,7 @@ class RemotionRenderer:
             "timeline_path": str(project_dir / "timeline.json"),
             "manifest_path": str(manifest_path),
             "subtitle_path": str(srt_path),
+            "captions_path": str(captions_path),
             "output_path": str(output_path),
             "duration_seconds": round(duration_seconds, 2),
             "scene_count": len(manifest_scenes),
