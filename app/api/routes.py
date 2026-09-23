@@ -44,7 +44,7 @@ async def _get_owned_channel(
     principal: Principal,
 ) -> Channel:
     channel = await db.get(Channel, channel_id)
-    if not channel or channel.owner_id != principal.scope_key:
+    if not channel or ((channel.organization_id is not None and channel.organization_id != principal.organization_id) or (channel.organization_id is None and channel.owner_id != principal.scope_key)):
         raise HTTPException(404, "Channel not found")
     return channel
 
