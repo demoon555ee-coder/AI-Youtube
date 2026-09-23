@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:3000"
     cors_origins: str = "http://localhost:3000"
     google_client_secrets_file: str = "/app/secrets/client_secret.json"
+    google_client_secrets_json: str = ""
     oauth_redirect_path: str = "/api/v1/youtube/oauth/callback"
     oauth_state_ttl_seconds: int = 600
     app_encryption_key: str = ""
