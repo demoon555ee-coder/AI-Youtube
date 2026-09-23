@@ -66,3 +66,22 @@ def test_routing_runtime_availability_is_redacted_and_visible_in_ui():
     assert '"api_key"' not in block
     assert '"/api/v1/routing/runtime-availability"' in page
     assert "Runtime availability" in page
+
+
+
+def test_dashboard_refreshes_workflow_state_and_pipeline_matches_eight_stages():
+    page = (ROOT / "frontend/app/page.tsx").read_text(encoding="utf-8")
+    css = (ROOT / "frontend/app/globals.css").read_text(encoding="utf-8")
+    assert 'window.setInterval(() => { void load(); }, 5000)' in page
+    assert 'return () => window.clearInterval(timer);' in page
+    assert '.pipeline { display:grid; grid-template-columns:repeat(8,1fr);' in css
+
+
+def test_application_version_matches_current_changelog_release():
+    import re
+    config = (ROOT / "app/config.py").read_text(encoding="utf-8")
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    app_version = re.search(r'app_version: str = "([^"]+)"', config).group(1)
+    changelog_version = re.search(r'^## ([0-9]+\\.[0-9]+\\.[0-9]+) — ', changelog, re.MULTILINE).group(1)
+    assert app_version == changelog_version
+    assert f"# YouTube AI Platform v{app_version}" in (ROOT / "README.md").read_text(encoding="utf-8")
