@@ -43,8 +43,9 @@ def test_runway_runtime_availability_rejects_invalid_config_key(monkeypatch):
     from app.routing.service import ProviderRouter
 
     monkeypatch.setattr("app.routing.service.settings.runway_api_key", "key_short", raising=False)
-    candidate_obj = candidate("runway", "premium", 0.01)
-    candidate_obj.kind = "runway"
-    candidate_obj.capabilities = {"video": True, "generative": True}
+    candidate_obj = Candidate(
+        "runway", "runway", "premium", 100, "second", 0.01,
+        {"video": True, "generative": True}, {}, True,
+    )
     router = ProviderRouter.__new__(ProviderRouter)
     assert router._runtime_available(candidate_obj) is False
