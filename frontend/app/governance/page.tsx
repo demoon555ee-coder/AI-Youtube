@@ -70,7 +70,7 @@ export default function GovernancePage(){
     <div style={{display:"flex",alignItems:"end"}}><button className="btn" disabled={loading||!channelId} onClick={()=>void load()}>{loading?"Loading…":"Refresh"}</button></div>
    </div>
   </div>
-  {policy&&<section className="grid grid3" style={{marginBottom:16}}>
+  {policy&&<section className="grid grid2" style={{marginBottom:16}}>
    <div className="panel"><div className="label">Policy</div><div className="value">v{policy.policy_version} · {policy.enabled?"Enabled":"Disabled"}</div><div className="sub">Default: {policy.default_mode}</div><select className="select" style={{marginTop:10}} value={policy.default_mode} onChange={e=>void setDefaultMode(e.target.value)} disabled={loading}><option value="auto">auto</option><option value="approve">approve</option><option value="defer">defer</option><option value="block">block</option></select></div>
    <div className="panel"><div className="label">Emergency kill switch</div><div className="value">{policy.emergency_kill_switch?"ACTIVE":"OFF"}</div><button className="btn" style={{marginTop:10}} disabled={loading} onClick={()=>void kill(!policy.emergency_kill_switch)}>{policy.emergency_kill_switch?"Disable":"Enable"} kill switch</button></div>
    <div className="panel"><div className="label">Approval queue</div><div className="value">{approvals.length}</div><div className="sub">Pending human decisions</div></div>
