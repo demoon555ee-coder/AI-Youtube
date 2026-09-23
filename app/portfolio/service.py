@@ -146,7 +146,7 @@ class PortfolioService:
 
     async def overview(self, owner_id: str = "local-user") -> dict:
         portfolio = await self.ensure(owner_id)
-        now = datetime.utcnow()
+        now = _utcnow()
         month_start = datetime(now.year, now.month, 1)
         day_start = datetime(now.year, now.month, now.day)
         monthly_spend = await self._spend(portfolio.id, since=month_start)
