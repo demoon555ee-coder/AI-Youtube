@@ -88,6 +88,8 @@ jobs:
         run: docker compose -f docker-compose.staging.yml --env-file .env.staging up -d
       - name: Health smoke test
         run: ./scripts/staging_smoke.sh
+      - name: Remotion runtime smoke test
+        run: docker compose -f docker-compose.staging.yml --env-file .env.staging exec -T api npm --prefix /app/app/remotion run smoke
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
