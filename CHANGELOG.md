@@ -1,5 +1,13 @@
 # Changelog
 
+## 4.2.4 — Final media pipeline hardening
+
+- Added server-side Remotion rendering with FFmpeg fallback and real staging runtime smoke coverage.
+- Added Scene Director motion, transition and caption-style directives to the render contract.
+- Added machine-readable caption tracks and persistent render timeline artifacts.
+- Added deterministic thumbnail experiment variants and artifact registration.
+- Production Compose includes a dedicated workflow worker for durable execution, autopilot scheduling, post-publish monitoring, recovery and maintenance loops.
+
 ## 4.2.4 — Provider Runtime Visibility
 - Added a read-only runtime-availability API that reports effective provider candidates without exposing API keys.
 - Added routing UI visibility for provider readiness so unavailable credentials are visible before starting production.
