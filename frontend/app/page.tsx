@@ -55,6 +55,12 @@ export default function Dashboard() {
     return runtime?.services?.[service]?.find(item => item.provider === name);
   }
 
+  function chooseProvider(service: string, preferred: string[]) {
+    const candidates = runtime?.services?.[service] || [];
+    return preferred.map(name => candidates.find(item => item.provider === name)).find(item => item?.runtime_available)
+      || preferred.map(name => candidates.find(item => item.provider === name)).find(Boolean);
+  }
+
   const active = dashboard?.projects.find(p => !["PUBLISHED", "READY_TO_PUBLISH", "FAILED"].includes(p.status));
   const statusStep: Record<string, number> = { QUEUED: 0, RESEARCHING: 0, SCRIPTING: 1, STORYBOARDING: 2, DIRECTING_SCENES: 3, GENERATING_ASSETS: 4, EDITING: 5, GENERATING_THUMBNAIL: 6, QA: 6, READY_TO_PUBLISH: 7, PUBLISHED: 7, FAILED: 0 };
   const activeIndex = active ? statusStep[active.status] ?? -1 : -1;
