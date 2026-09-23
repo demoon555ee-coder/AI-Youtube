@@ -84,14 +84,14 @@ export default function Dashboard() {
           <Link className="btn" href="/routing">Open routing</Link>
         </div>
         {!runtime?.enabled ? <div className="empty">Provider health is unavailable or disabled.</div> : <div className="grid grid3">
-          {[
-            ["Generative visuals", findProvider("visual", "openai_image") || findProvider("image", "openai_image") || findProvider("image", "stability_image") || findProvider("image", "mock_png")],
-            ["Stock B-roll", findProvider("video", "pexels_video")],
-            ["Voice", findProvider("tts", "elevenlabs") || findProvider("tts", "openai_tts") || findProvider("tts", "espeak")],
-          ].map(([label, item]) => {
-            const candidate = item as ProviderStatus | undefined;
+          {([
+            { label: "Generative visuals", item: findProvider("visual", "openai_image") || findProvider("image", "openai_image") || findProvider("image", "stability_image") || findProvider("image", "mock_png") },
+            { label: "Stock B-roll", item: findProvider("video", "pexels_video") },
+            { label: "Voice", item: findProvider("tts", "elevenlabs") || findProvider("tts", "openai_tts") || findProvider("tts", "espeak") },
+          ] as Array<{ label: string; item?: ProviderStatus }>).map(({ label, item }) => {
+            const candidate = item;
             const capabilityText = candidate ? Object.keys(candidate.capabilities || {}).filter(k => candidate.capabilities[k]).join(", ") : "";
-            return <div className="stat" key={String(label)}>
+            return <div className="stat" key={label}>
               <span className="label">{label}</span>
               <div className="n">{candidate?.provider || "Not configured"}</div>
               <span className={"badge " + (candidate?.runtime_available ? "success" : "danger")}>{runtimeBadge(candidate)}</span>
