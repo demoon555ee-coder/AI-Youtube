@@ -28,3 +28,23 @@ def test_unavailable_provider_is_ignored():
     items = [candidate("dead", "premium", 0.0, available=False), candidate("live", "standard", 0.01)]
     ordered = rank_candidates(items, requested_tier="standard", units=1, feasible={"dead": True, "live": True}, allow_quality_downgrade=True)
     assert ordered[0].provider == "live"
+
+
+def test_runway_key_format_requires_provider_shape():
+    from app.routing.service import _is_valid_runway_api_key
+
+    assert _is_valid_runway_api_key("key_" + "a" * 128)
+    assert _is_valid_runway_api_key("KEY_" + "A" * 128)
+    assert not _is_valid_runway_api_key("key_short")
+    assert not _is_valid_runway_api_key("key_" + "a" * 127)
+
+
+def test_runway_runtime_availability_rejects_invalid_config_key(monkeypatch):
+    from app.routing.service import ProviderRouter
+
+    monkeypatch.setattr("app.routing.service.settings.runway_api_key", "key_short", raising=False)
+    candidate_obj = candidate("runway", "premium", 0.01)
+    candidate_obj.kind = "runway"
+    candidate_obj.capabilities = {"video": True, "generative": True}
+    router = ProviderRouter.__new__(ProviderRouter)
+    assert router._runtime_available(candidate_obj) is False
