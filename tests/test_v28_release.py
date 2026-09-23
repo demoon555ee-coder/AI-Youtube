@@ -105,7 +105,7 @@ def test_compose_defaults_target_current_release():
         text = (ROOT / fn).read_text()
         assert "2.7.0" not in text
         if fn == "docker-compose.production.yml":
-            assert "4.2.1" in text
+            assert "4.2.4" in text
         elif fn != "docker-compose.bluegreen.yml":
             assert "4.2.1" in text
 
