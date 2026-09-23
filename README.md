@@ -37,19 +37,15 @@ Learning observes terminal task outcomes, proposes bounded strategy changes, and
 
 ## Verification boundary
 
-Verified in this isolated environment:
-- full Python test suite: **335 passed, 3 skipped**
-- Docker Compose Supabase staging configuration: **PASS**
-- Supabase schema/security staging verification script: **ready; live connection requires the local staging DB password**
-- Python compilation/static contracts: **PASS**
-- frontend/E2E AST checks: **PASS**
-- migrations: **001 through 034**
-- dedicated control-plane and learning integration tests: **PASS**
+Release verification is now enforced in CI rather than inferred from the isolated development environment.
 
-Not executed here: a live PostgreSQL/asyncpg application boot, Docker deployment, external AI providers, YouTube OAuth, Stripe and production staging/E2E runtime. The environment does not contain `asyncpg` or installed frontend `node_modules`, so those checks remain deployment/staging gates rather than claims of local execution.
+- main CI run **#165** for commit `0641dc8` — **PASS**
+- backend Python 3.12/3.13 — **PASS**
+- frontend build and AST checks — **PASS**
+- PostgreSQL 15/16 integration matrix on Python 3.12/3.13 — **PASS**
+- staging Docker + health smoke + real Remotion runtime smoke + browser E2E — **PASS**
+- release audit — **PASS**
+- current schema on production boot — `036_enforce_content_version_timestamps`
+- production API and Web deployments for commit `0641dc8` — **SUCCESS**
 
-See `AUDIT_REPORT.md` and:
-- `deploy/AGENT_GOVERNANCE.md`
-- `deploy/AGENT_RUNTIME.md`
-- `deploy/AGENT_PLANNER.md`
-- `deploy/AGENT_LEARNING.md`
+External provider credentials remain environment-dependent. The platform therefore keeps provider routing/readiness explicit and never fabricates missing credentials. Production automation requires the dedicated `worker-release` service to remain healthy, because workflow execution, autopilot scheduling, post-publish monitoring and maintenance loops run there.
