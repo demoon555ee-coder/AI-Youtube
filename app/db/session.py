@@ -9,9 +9,9 @@ def _normalize_database_url(database_url: str) -> tuple[URL, bool]:
     if url.drivername in {"postgresql", "postgres"}:
         url = url.set(drivername="postgresql+asyncpg")
 
-    # Prefer Neon's direct read/write endpoint for SQLAlchemy/asyncpg.
-    if url.host and "-pooler." in url.host:
-        url = url.set(host=url.host.replace("-pooler.", "."))
+    # Keep Neon's pooler endpoint when it is provided by DATABASE_URL.
+    # The configured Railway credential is valid on the pooler endpoint;
+    # rewriting it to the direct endpoint can break authentication.
 
     # asyncpg does not consume libpq's sslmode/channel_binding URL parameters.
     query = dict(url.query)
