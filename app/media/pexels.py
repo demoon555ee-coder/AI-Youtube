@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import time
 from pathlib import Path
 from typing import Any
@@ -161,9 +160,14 @@ class PexelsPhotoProvider(_PexelsBaseProvider):
 
             media = await self._download(client, str(media_url), allowed_hosts=_ALLOWED_IMAGE_HOSTS)
 
-        path = Path(output_path).with_suffix(".jpg")
+        source_suffix = Path(urlparse(str(media_url)).path).suffix.lower()
+        image_suffix = source_suffix if source_suffix in {".jpg", ".jpeg", ".png", ".webp"} else ".jpg"
+        path = Path(output_path).with_suffix(image_suffix)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(media)
+        media_type = {
+            ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"
+        }[image_suffix]
 
         photographer = str(photo.get("photographer") or "Unknown")
         photographer_url = str(photo.get("photographer_url") or "")
@@ -172,7 +176,7 @@ class PexelsPhotoProvider(_PexelsBaseProvider):
         return {
             "provider": self.name,
             "path": str(path),
-            "media_type": "image/jpeg",
+            "media_type": media_type,
             "status": "completed",
             "external_job_id": str(photo.get("id") or ""),
             "source_url": pexels_url,
