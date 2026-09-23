@@ -91,6 +91,7 @@ async def finish_oauth(db: AsyncSession, callback_url: str, state: str):
             db.add(channel)
             await db.flush()
         else:
+            # A YouTube channel is globally identifiable and must never be reassigned from one organization to another by a new OAuth flow; skip channels already connected to another organization.
             if channel.organization_id and channel.organization_id != organization_id:
                 continue
             if not channel.organization_id and channel.owner_id != oauth_state.owner_id:

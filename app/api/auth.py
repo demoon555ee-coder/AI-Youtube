@@ -2,20 +2,19 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
-import secrets
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
 from sqlalchemy import desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.security import Principal, get_current_principal, permission_dependency, session_csrf_token, issue_session_csrf_token, create_session, hash_password
+from app.auth.security import Principal, get_current_principal, permission_dependency, session_csrf_token, issue_session_csrf_token, create_session
 from app.config import settings
 from app.db.session import get_db
 from app.models.auth import ApiKey, AuditLog, AuthSession, Membership, Organization, User, UsageEvent
 from app.schemas.auth import ApiKeyCreateRequest, LoginRequest, MemberAddRequest, OrganizationCreateRequest, RegisterRequest, UsageEventRequest
 from app.services.audit import write_audit
-from app.services.auth_service import add_member, create_key, login, record_usage, register
+from app.services.auth_service import add_member, create_google_user, create_key, login, record_usage, register
 from app.privacy.service import create_deletion_request, build_user_export, client_ip, login_is_allowed, record_login_failure, clear_login_failures
 from app.services.google_auth import authorization_url as google_authorization_url, exchange_code as exchange_google_code, verified_identity
 from app.oauth.crypto import encrypt
@@ -64,9 +63,7 @@ async def google_callback(request: Request, response: Response, db: AsyncSession
         email = identity["email"]
         user = await db.scalar(select(User).where(User.email == email))
         if not user:
-            user = User(email=email, password_hash=hash_password(secrets.token_urlsafe(32)), name=identity["name"])
-            db.add(user)
-            await db.flush()
+            user = await create_google_user(db, email=email, name=identity["name"])
         elif not user.is_active:
             raise HTTPException(403, "User is inactive")
         membership = await db.scalar(select(Membership).where(Membership.user_id == user.id, Membership.active.is_(True)).order_by(Membership.created_at.asc()))

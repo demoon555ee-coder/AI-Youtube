@@ -62,6 +62,13 @@ async def login(db: AsyncSession, *, email: str, password: str, organization_id:
     return user, membership, session, raw_token, csrf_token
 
 
+async def create_google_user(db: AsyncSession, *, email: str, name: str) -> User:
+    user = User(**{"email": email, "password_hash": hash_password(secrets.token_urlsafe(32)), "name": name})
+    db.add(user)
+    await db.flush()
+    return user
+
+
 async def add_member(db: AsyncSession, *, organization_id: UUID, email: str, role: str) -> Membership:
     user = await db.scalar(select(User).where(User.email == email.strip().lower()))
     if not user:
