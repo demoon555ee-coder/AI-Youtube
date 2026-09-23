@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.2.4 — Release synchronization and runtime hardening
+
+- Aligned production media-provider credential aliases for Runway readiness and execution.
+- Removed deprecated naive UTC helper usage from the worker and portfolio services while preserving compatibility with existing timestamp columns.
+- Documented production media-provider credential names and updated the environment examples to the 4.2.4 application version.
+
 ## 4.2.4 — Final media pipeline hardening
 
 - Added server-side Remotion rendering with FFmpeg fallback and real staging runtime smoke coverage.
@@ -33,15 +39,3 @@
 - Lease tokens are mandatory for worker lifecycle mutations.
 - Added safe task lineage and dependency validation.
 - Planner and runtime states are synchronized so completed tasks unlock downstream nodes.
-- Approval-bound nodes are materialized into real approval requests when dependencies are ready.
-- Learning evidence is generated from task outcomes and strategy changes are bounded to selection preference.
-- Added planner event history and audit fields for risk tier, policy version and task linkage.
-- Simplified operator UIs so humans approve/reject governance and learning proposals without impersonating workers.
-
-## Historical releases
-
-- 4.2.0 — Agent Learning & Self-Improvement
-- 4.1.0 — Agent Planner & Dynamic Workflow Graph
-- 4.0.0 — Autonomous Agent Runtime / Multi-Agent Orchestration
-- 3.9.0 — Agent Governance & Human Oversight
-- 3.8.0 — Autonomous Execution Controller
