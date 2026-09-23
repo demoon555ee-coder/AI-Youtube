@@ -20,7 +20,7 @@ services:
     env_file: .env
     environment:
       WORKFLOW_ENABLED: "false"
-      APP_VERSION: "4.2.1"
+      APP_VERSION: "4.2.4"
       DATABASE_URL: postgresql+asyncpg://youtube_ai:youtube_ai@db:5432/youtube_ai
     depends_on:
       db:
@@ -41,7 +41,7 @@ services:
     env_file: .env
     environment:
       WORKFLOW_ENABLED: "true"
-      APP_VERSION: "4.2.1"
+      APP_VERSION: "4.2.4"
       DATABASE_URL: postgresql+asyncpg://youtube_ai:youtube_ai@db:5432/youtube_ai
     command: ["python", "-m", "app.workflows.worker"]
     healthcheck:
