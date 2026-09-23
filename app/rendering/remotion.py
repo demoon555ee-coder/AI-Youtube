@@ -51,7 +51,6 @@ class RemotionRenderer:
         asset_dir.mkdir(parents=True, exist_ok=True)
 
         from app.rendering.service import (
-            format_srt_time,
             probe_duration,
             synthesize_with_chunking,
             write_srt,
