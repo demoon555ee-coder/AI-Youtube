@@ -6,6 +6,7 @@ from app.config import settings
 from app.tts.base import TTSProvider
 from app.tts.espeak import EspeakTTSProvider
 from app.tts.openai import OpenAITTSProvider
+from app.tts.elevenlabs import ElevenLabsTTSProvider
 
 
 def get_tts(provider_name: str | None = None, config: dict | None = None) -> TTSProvider:
@@ -14,6 +15,15 @@ def get_tts(provider_name: str | None = None, config: dict | None = None) -> TTS
     kind = str(cfg.get("kind") or name)
     if name == "espeak" or kind == "espeak":
         return EspeakTTSProvider()
+    if name == "elevenlabs" or kind == "elevenlabs":
+        api_key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key") or settings.elevenlabs_api_key or settings.tts_api_key)
+        voice_id = str(cfg.get("voice_id") or settings.elevenlabs_voice_id or settings.tts_voice)
+        return ElevenLabsTTSProvider(
+            api_key=api_key,
+            voice_id=voice_id,
+            model=str(cfg.get("model") or settings.tts_model or "eleven_flash_v2_5"),
+            base_url=str(cfg.get("base_url") or settings.tts_endpoint or "https://api.elevenlabs.io/v1"),
+        )
     if name == "openai_tts" or kind == "openai_tts":
         api_key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key") or settings.tts_api_key or settings.llm_api_key)
         base_url = str(cfg.get("base_url") or cfg.get("endpoint") or settings.tts_endpoint or "https://api.openai.com/v1")
