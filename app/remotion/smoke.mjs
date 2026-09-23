@@ -1,8 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import {fileURLToPath} from "node:url";
 
-const projectRoot = path.dirname(new URL(import.meta.url).pathname);
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(projectRoot, "public");
 await fs.mkdir(publicDir, {recursive: true});
 
