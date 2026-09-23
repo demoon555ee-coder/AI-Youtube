@@ -94,10 +94,21 @@ async def test_remotion_renderer_writes_timeline_artifact(monkeypatch, tmp_path)
     renderer = RemotionRenderer(str(tmp_path), tts=FakeTTS())
     result = await renderer.render_video(
         project_id="timeline-test",
-        storyboard={"scenes": [{"scene": 1, "duration": 1, "narration": "hello", "visual": "hello"}]},
+        storyboard={"scenes": [{"scene": 1, "duration": 1, "narration": "hello", "visual": "hello", "caption_style": "highlight"}]},
     )
 
     timeline = tmp_path / "timeline-test" / "timeline.json"
     assert timeline.exists()
     assert timeline.stat().st_size > 20
+    timeline_payload = __import__("json").loads(timeline.read_text(encoding="utf-8"))
+    assert timeline_payload["captions"][0]["style"] == "highlight"
     assert result["timeline_path"] == str(timeline)
+
+
+def test_remotion_root_supports_all_caption_styles():
+    from pathlib import Path
+
+    text = Path("app/remotion/src/Root.tsx").read_text(encoding="utf-8")
+    assert 'standard: {' in text
+    assert 'highlight: {' in text
+    assert 'minimal: {' in text
