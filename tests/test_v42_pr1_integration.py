@@ -1,4 +1,5 @@
 import pytest
+from uuid import uuid4
 
 from app.agents.factory import build_agent
 from app.agents.real_agents import LLMScriptAgent
@@ -223,3 +224,40 @@ def test_workflow_start_does_not_hold_project_lock_across_sessions():
     block = source[start:end]
     assert "await db.get(VideoProject, project_id, with_for_update=True)" not in block
     assert "WorkflowEngine(SessionLocal).create_or_get" in block
+
+
+@pytest.mark.asyncio
+async def test_production_routes_broll_to_stock_capability(monkeypatch):
+    import app.agents.production as production_module
+
+    class FakeRouter:
+        def __init__(self, db):
+            self.db = db
+
+        async def route(self, **kwargs):
+            assert kwargs["service"] == "video"
+            assert kwargs["required_capabilities"] == {"stock_broll"}
+            assert kwargs["allow_quality_downgrade"] is False
+            return {
+                "decision_id": "decision-stock-1",
+                "service": "video",
+                "provider": "pexels_video",
+                "kind": "pexels_video",
+                "tier": "standard",
+                "estimated_cost_usd": 0.0,
+                "fallback_used": False,
+                "reason": "selected=pexels_video",
+                "config": {},
+            }
+
+    monkeypatch.setattr(production_module, "ProviderRouter", FakeRouter)
+    agent = production_module.ProductionAgent(db=object(), channel_id=uuid4())
+    project_id = str(uuid4())
+    routes, notes = await agent._build_scene_routes(
+        input_data={},
+        storyboard={"scenes": [{"scene": 3, "duration": 6, "asset_type": "broll", "visual_prompt": "office"}]},
+        project_id=project_id,
+    )
+
+    assert routes["3"]["video"]["provider"] == "pexels_video"
+    assert notes[0]["status"] == "selected"
