@@ -261,3 +261,29 @@ async def test_production_routes_broll_to_stock_capability(monkeypatch):
 
     assert routes["3"]["video"]["provider"] == "pexels_video"
     assert notes[0]["status"] == "selected"
+
+
+
+def test_pexels_runtime_availability_tracks_key_presence(monkeypatch):
+    from app.config import settings
+    from app.routing.policy import Candidate
+    from app.routing.service import ProviderRouter
+
+    candidate = Candidate(
+        provider="pexels_video",
+        kind="pexels_video",
+        tier="standard",
+        priority=120,
+        unit="second",
+        unit_cost_usd=0.0,
+        capabilities={"video": True, "stock_broll": True},
+        config={},
+    )
+
+    monkeypatch.setattr(settings, "pexels_api_key", "")
+    monkeypatch.delenv("PEXELS_API_KEY", raising=False)
+    router = ProviderRouter.__new__(ProviderRouter)
+    assert router._runtime_available(candidate) is False
+
+    monkeypatch.setenv("PEXELS_API_KEY", "test-key")
+    assert router._runtime_available(candidate) is True

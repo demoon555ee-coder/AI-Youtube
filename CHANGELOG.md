@@ -1,5 +1,10 @@
 # Changelog
 
+## 4.2.4 — Provider Runtime Visibility
+- Added a read-only runtime-availability API that reports effective provider candidates without exposing API keys.
+- Added routing UI visibility for provider readiness so unavailable credentials are visible before starting production.
+- Added regression coverage for Pexels runtime availability with and without a configured key.
+
 ## 4.2.3 — Capability-aware Media Routing
 - Prevented stock providers from being selected for ordinary generative production and thumbnail tasks.
 - Added per-scene stock routing for `broll` scenes with automatic fallback to the generative route when stock media is unavailable.

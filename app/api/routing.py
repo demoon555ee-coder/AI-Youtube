@@ -66,6 +66,30 @@ async def route_project(payload: ProjectRouteRequest, db: AsyncSession = Depends
         raise HTTPException(500 if settings.app_env == "production" else 400, "Request failed" if settings.app_env == "production" else str(exc)) from exc
 
 
+@router.get("/runtime-availability")
+async def runtime_availability(db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    if not settings.provider_health_enabled:
+        raise HTTPException(404, "Provider health is disabled")
+    router = ProviderRouter(db)
+    portfolio = await router.ensure_portfolio(principal.scope_key)
+    services = ("llm", "research", "visual", "tts", "render", "image", "video")
+    payload = {}
+    for service in services:
+        candidates = await router.candidates(portfolio.id, service)
+        payload[service] = [
+            {
+                "provider": candidate.provider,
+                "kind": candidate.kind,
+                "tier": candidate.tier,
+                "priority": candidate.priority,
+                "runtime_available": candidate.runtime_available,
+                "capabilities": candidate.capabilities or {},
+            }
+            for candidate in candidates
+        ]
+    return {"enabled": True, "services": payload}
+
+
 @router.get("/decisions")
 async def decisions(limit: int = 100, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     if limit < 1 or limit > 500:
