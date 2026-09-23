@@ -56,7 +56,7 @@ def get_visual_provider(provider_name: str | None = None, config: dict | None = 
             cache_ttl_seconds=int(cfg.get("cache_ttl_seconds", 86400)),
         )
     if name == "runway" or kind == "runway":
-        api_key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key") or settings.runway_api_key or settings.video_api_key)
+        api_key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key") or settings.runway_api_key or settings.video_api_key or os.getenv("RUNWAY_API_KEY", "") or os.getenv("RUNWAYML_API_SECRET", "") or os.getenv("RUNWAY_API_SECRET", "") or os.getenv("RUNWAY_API", ""))
         return RunwayVideoProvider(
             api_key=api_key,
             base_url=str(cfg.get("base_url") or settings.video_endpoint or "https://api.dev.runwayml.com/v1"),
