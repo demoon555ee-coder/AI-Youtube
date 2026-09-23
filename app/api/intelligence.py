@@ -24,7 +24,7 @@ async def intelligence_overview(channel_id: str, db: AsyncSession = Depends(get_
     except ValueError as exc:
         raise HTTPException(404, "Channel not found") from exc
     channel = await db.get(Channel, channel_uuid)
-    if not channel or channel.owner_id != principal.scope_key:
+    if not channel or ((channel.organization_id is not None and channel.organization_id != principal.organization_id) or (channel.organization_id is None and channel.owner_id != principal.scope_key)):
         raise HTTPException(404, "Channel not found")
     memory = await load_channel_memory(db, channel_id)
     blueprints = await list_blueprints(db, channel_id=channel_id, limit=20)
@@ -50,7 +50,7 @@ async def intelligence_blueprints(channel_id: str, limit: int = 50, db: AsyncSes
     except ValueError as exc:
         raise HTTPException(404, "Channel not found") from exc
     channel = await db.get(Channel, channel_uuid)
-    if not channel or channel.owner_id != principal.scope_key:
+    if not channel or ((channel.organization_id is not None and channel.organization_id != principal.organization_id) or (channel.organization_id is None and channel.owner_id != principal.scope_key)):
         raise HTTPException(404, "Channel not found")
     rows = await list_blueprints(db, channel_id=channel_id, limit=limit)
     return {"channel_id": channel_id, "blueprints": [serialize_blueprint(x) for x in rows]}
@@ -63,7 +63,7 @@ async def intelligence_blueprint(channel_id: str, idea_id: str, payload: Bluepri
     except ValueError as exc:
         raise HTTPException(404, "Channel not found") from exc
     channel = await db.get(Channel, channel_uuid)
-    if not channel or channel.owner_id != principal.scope_key:
+    if not channel or ((channel.organization_id is not None and channel.organization_id != principal.organization_id) or (channel.organization_id is None and channel.owner_id != principal.scope_key)):
         raise HTTPException(404, "Channel not found")
     try:
         row = await build_for_idea(
