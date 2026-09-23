@@ -11,12 +11,7 @@ type Channel = {
   language: string;
   youtube_channel_id?: string | null;
   thumbnail_url?: string | null;
-  subscriber_count?: number;
 };
-
-function formatSubscribers(value = 0) {
-  return new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(value);
-}
 
 function ChannelOnboardingContent() {
   const router = useRouter();
@@ -114,7 +109,7 @@ function ChannelOnboardingContent() {
           <div className="channelCardBody">
             <div className="channelCardTitle">{channel.name}</div>
             <div className="mini">{channel.niche || "YouTube channel"}{youtubeId}</div>
-            <div className="channelCardMeta"><span>{formatSubscribers(channel.subscriber_count)} subscribers</span><span>{selectedLabel}</span></div>
+            <div className="channelCardMeta"><span>{channel.youtube_channel_id ? "Connected to YouTube" : "Platform workspace"}</span><span>{selectedLabel}</span></div>
           </div>
         </button>;
       })}
