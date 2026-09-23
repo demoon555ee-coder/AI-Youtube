@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import {spawn} from "node:child_process";
 import {fileURLToPath} from "node:url";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
@@ -32,7 +33,7 @@ const manifest = {
 
 await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
 
-const child = process.spawn(
+const child = spawn(
   process.execPath,
   ["render.mjs", "--input", manifestPath],
   {

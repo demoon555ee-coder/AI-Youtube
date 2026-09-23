@@ -42,6 +42,7 @@ class RemotionRenderer:
         public_dir = project_dir / "remotion_public"
         asset_dir = public_dir / "assets"
         manifest_path = project_dir / "remotion_manifest.json"
+        timeline_path = project_dir / "timeline.json"
         output_path = project_dir / "final.mp4"
         srt_path = project_dir / "subtitles.srt"
         captions_path = project_dir / "captions.json"
@@ -150,6 +151,20 @@ class RemotionRenderer:
             json.dumps(manifest, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+        timeline_payload = {
+            "project_id": project_id,
+            "composition_id": self.COMPOSITION_ID,
+            "fps": self.FPS,
+            "width": self.WIDTH,
+            "height": self.HEIGHT,
+            "duration_in_frames": manifest["durationInFrames"],
+            "scenes": manifest_scenes,
+            "captions": captions,
+        }
+        timeline_path.write_text(
+            json.dumps(timeline_payload, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
         write_srt(srt_path, subtitle_rows)
         captions_path.write_text(
             json.dumps(captions, ensure_ascii=False, indent=2),
@@ -166,7 +181,7 @@ class RemotionRenderer:
             "render_status": "completed",
             "render_engine": "remotion",
             "caption_engine": "remotion",
-            "timeline_path": str(project_dir / "timeline.json"),
+            "timeline_path": str(timeline_path),
             "manifest_path": str(manifest_path),
             "subtitle_path": str(srt_path),
             "captions_path": str(captions_path),
