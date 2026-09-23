@@ -1,4 +1,4 @@
-# YouTube AI Platform v4.2.1
+# YouTube AI Platform v4.2.4
 
 This release is a control-plane correction of the v3.9–v4.2 autonomy layers. The core product, existing Workflow Engine and production pipeline remain intact; the governance, planning, runtime and learning layers now share one lifecycle and authorization contract.
 
