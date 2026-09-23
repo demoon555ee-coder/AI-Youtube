@@ -5,21 +5,43 @@ import json
 from typing import AsyncIterator
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 
 from app.db.session import SessionLocal
+from app.auth.security import Principal, get_current_principal
+from app.models.auth import Channel
 from app.models import WorkflowEvent, WorkflowRun, WorkflowStep, VideoProject
 
 router = APIRouter(prefix="/api/v1/workflows", tags=["workflows"])
 
 
-@router.get("/{workflow_id}")
-async def get_workflow(workflow_id: UUID):
+async def _get_owned_workflow(workflow_id: UUID, principal: Principal) -> WorkflowRun:
     async with SessionLocal() as db:
         run = await db.get(WorkflowRun, workflow_id)
         if not run:
+            raise HTTPException(404, "Workflow not found")
+        project = await db.get(VideoProject, run.project_id)
+        if not project:
+            raise HTTPException(404, "Workflow not found")
+        channel = await db.get(Channel, project.channel_id)
+        if not channel or channel.owner_id != principal.scope_key:
+            raise HTTPException(404, "Workflow not found")
+        return run
+
+
+@router.get("/{workflow_id}")
+async def get_workflow(workflow_id: UUID, principal: Principal = Depends(get_current_principal)):
+    async with SessionLocal() as db:
+        run = await db.get(WorkflowRun, workflow_id)
+        if not run:
+            raise HTTPException(404, "Workflow not found")
+        project = await db.get(VideoProject, run.project_id)
+        if not project:
+            raise HTTPException(404, "Workflow not found")
+        channel = await db.get(Channel, project.channel_id)
+        if not channel or channel.owner_id != principal.scope_key:
             raise HTTPException(404, "Workflow not found")
         q = await db.execute(
             select(WorkflowStep).where(WorkflowStep.workflow_run_id == workflow_id).order_by(WorkflowStep.step_order)
@@ -53,16 +75,21 @@ async def get_workflow(workflow_id: UUID):
 
 
 @router.post("/{workflow_id}/cancel")
-async def cancel_workflow(workflow_id: UUID):
+async def cancel_workflow(workflow_id: UUID, principal: Principal = Depends(get_current_principal)):
     async with SessionLocal() as db:
         run = await db.get(WorkflowRun, workflow_id, with_for_update=True)
         if not run:
+            raise HTTPException(404, "Workflow not found")
+        project = await db.get(VideoProject, run.project_id)
+        if not project:
+            raise HTTPException(404, "Workflow not found")
+        channel = await db.get(Channel, project.channel_id)
+        if not channel or channel.owner_id != principal.scope_key:
             raise HTTPException(404, "Workflow not found")
         if run.status in {"COMPLETED", "FAILED", "CANCELLED"}:
             return {"id": str(run.id), "status": run.status, "cancelled": False}
         run.status = "CANCELLED"
         run.lease_until = None
-        project = await db.get(VideoProject, run.project_id)
         if project:
             project.status = "CANCELLED"
             db.add(WorkflowEvent(workflow_run_id=run.id, project_id=project.id, event_type="workflow.cancelled", payload={}))
@@ -74,6 +101,7 @@ async def cancel_workflow(workflow_id: UUID):
 async def workflow_events(
     workflow_id: UUID,
     after: int = Query(default=0, ge=0),
+    principal: Principal = Depends(get_current_principal),
 ):
     """Server-Sent Events stream. It polls PostgreSQL so it also works without Redis/WebSockets."""
 
@@ -107,4 +135,6 @@ async def workflow_events(
                 yield ": heartbeat\n\n"
             await asyncio.sleep(1)
 
+    # Validate access before starting the long-lived response stream.
+    await _get_owned_workflow(workflow_id, principal)
     return StreamingResponse(stream(), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
