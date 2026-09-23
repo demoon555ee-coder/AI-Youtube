@@ -42,7 +42,10 @@ def test_v30_routing_supports_native_real_media_defaults():
     assert any(item["provider"] == "openai_image" for item in DEFAULTS["image"])
     assert any(item["provider"] == "http_image" for item in DEFAULTS["image"])
     assert any(item["provider"] == "http_video" for item in DEFAULTS["video"])
+    assert any(item["provider"] == "runway" for item in DEFAULTS["video"])
     assert any(item["provider"] == "openai_tts" for item in DEFAULTS["tts"])
+    assert any(item["provider"] == "elevenlabs" for item in DEFAULTS["tts"])
+    assert any(item["provider"] == "stability_image" for item in DEFAULTS["visual"])
     assert SETTINGS_PROVIDER["image"]() == SETTINGS_PROVIDER["image"]()
     assert "video" in SETTINGS_PROVIDER
 
