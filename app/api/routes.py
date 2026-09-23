@@ -38,6 +38,29 @@ class ProjectCreate(BaseModel):
     topic: str = Field(min_length=1, max_length=1000)
 
 
+async def _get_owned_channel(
+    channel_id: UUID,
+    db: AsyncSession,
+    principal: Principal,
+) -> Channel:
+    channel = await db.get(Channel, channel_id)
+    if not channel or channel.owner_id != principal.scope_key:
+        raise HTTPException(404, "Channel not found")
+    return channel
+
+
+async def _get_owned_project(
+    project_id: UUID,
+    db: AsyncSession,
+    principal: Principal,
+) -> VideoProject:
+    project = await db.get(VideoProject, project_id)
+    if not project:
+        raise HTTPException(404, "Project not found")
+    await _get_owned_channel(project.channel_id, db, principal)
+    return project
+
+
 @router.post("/channels")
 async def create_channel(payload: ChannelCreate, db: AsyncSession = Depends(get_db), principal: Principal = Depends(require_roles({"owner", "admin"}))):
     owner_key = principal.scope_key
@@ -71,10 +94,8 @@ async def list_channels(db: AsyncSession = Depends(get_db), principal: Principal
 
 
 @router.get("/channels/{channel_id}/dashboard")
-async def channel_dashboard(channel_id: UUID, db: AsyncSession = Depends(get_db)):
-    channel = await db.get(Channel, channel_id)
-    if not channel:
-        raise HTTPException(404, "Channel not found")
+async def channel_dashboard(channel_id: UUID, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    channel = await _get_owned_channel(channel_id, db, principal)
     total_views = await db.scalar(select(func.coalesce(func.sum(AnalyticsSnapshot.views), 0)).where(AnalyticsSnapshot.channel_id == channel_id))
     total_watch = await db.scalar(select(func.coalesce(func.sum(AnalyticsSnapshot.watch_time_minutes), 0)).where(AnalyticsSnapshot.channel_id == channel_id))
     gained = await db.scalar(select(func.coalesce(func.sum(AnalyticsSnapshot.subscribers_gained), 0)).where(AnalyticsSnapshot.channel_id == channel_id))
@@ -95,19 +116,15 @@ async def channel_dashboard(channel_id: UUID, db: AsyncSession = Depends(get_db)
 
 
 @router.get("/channels/{channel_id}/projects")
-async def channel_projects(channel_id: UUID, limit: int = 50, db: AsyncSession = Depends(get_db)):
-    channel = await db.get(Channel, channel_id)
-    if not channel:
-        raise HTTPException(404, "Channel not found")
+async def channel_projects(channel_id: UUID, limit: int = 50, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    channel = await _get_owned_channel(channel_id, db, principal)
     q = await db.execute(select(VideoProject).where(VideoProject.channel_id == channel_id).order_by(VideoProject.updated_at.desc()).limit(min(max(limit, 1), 100)))
     return {"channel_id": str(channel_id), "projects": [{"id": str(p.id), "topic": p.topic, "status": p.status, "data": p.data or {}} for p in q.scalars().all()]}
 
 
 @router.post("/projects")
 async def create_project(payload: ProjectCreate, db: AsyncSession = Depends(get_db), principal: Principal = Depends(permission_dependency("content:write"))):
-    channel = await db.get(Channel, payload.channel_id)
-    if not channel:
-        raise HTTPException(404, "Channel not found")
+    channel = await _get_owned_channel(payload.channel_id, db, principal)
     project = VideoProject(channel_id=channel.id, topic=payload.topic)
     db.add(project)
     await db.commit()
@@ -122,9 +139,7 @@ async def run_project(
     db: AsyncSession = Depends(get_db),
     principal: Principal = Depends(require_roles({"owner", "admin", "editor"})),
 ):
-    project = await db.get(VideoProject, project_id)
-    if not project:
-        raise HTTPException(404, "Project not found")
+    project = await _get_owned_project(project_id, db, principal)
     if project.status in {"QUEUED", "RESEARCHING", "SCRIPTING", "STORYBOARDING", "GENERATING_ASSETS", "EDITING", "GENERATING_THUMBNAIL", "QA"}:
         q = await db.execute(select(WorkflowRun).where(WorkflowRun.project_id == project_id, WorkflowRun.status.in_({"QUEUED", "RUNNING"})).order_by(WorkflowRun.created_at.desc()).limit(1))
         run = q.scalar_one_or_none()
@@ -143,9 +158,7 @@ async def run_project(
 
 @router.post("/projects/{project_id}/retry", status_code=202)
 async def retry_project(project_id: UUID, db: AsyncSession = Depends(get_db), principal: Principal = Depends(require_roles({"owner", "admin", "editor"}))):
-    project = await db.get(VideoProject, project_id)
-    if not project:
-        raise HTTPException(404, "Project not found")
+    project = await _get_owned_project(project_id, db, principal)
     if project.status not in {"FAILED", "IDEA"}:
         raise HTTPException(409, "Retry is only available for failed or not-started projects")
     try:
@@ -156,10 +169,8 @@ async def retry_project(project_id: UUID, db: AsyncSession = Depends(get_db), pr
 
 
 @router.get("/projects/{project_id}")
-async def get_project(project_id: UUID, db: AsyncSession = Depends(get_db)):
-    project = await db.get(VideoProject, project_id)
-    if not project:
-        raise HTTPException(404, "Project not found")
+async def get_project(project_id: UUID, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    project = await _get_owned_project(project_id, db, principal)
     runs_q = await db.execute(select(AgentRun).where(AgentRun.project_id == project.id).order_by(AgentRun.started_at.asc()))
     publications_q = await db.execute(select(Publication).where(Publication.project_id == project.id).order_by(Publication.created_at.desc()))
     workflows_q = await db.execute(select(WorkflowRun).where(WorkflowRun.project_id == project.id).order_by(WorkflowRun.created_at.desc()).limit(5))
@@ -195,10 +206,8 @@ def _safe_output_path(raw_path: str | None) -> Path:
 
 
 @router.get("/projects/{project_id}/video")
-async def get_project_video(project_id: UUID, db: AsyncSession = Depends(get_db)):
-    project = await db.get(VideoProject, project_id)
-    if not project:
-        raise HTTPException(404, "Project not found")
+async def get_project_video(project_id: UUID, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    project = await _get_owned_project(project_id, db, principal)
     path = _safe_output_path((project.data or {}).get("editor", {}).get("output_path"))
     if not path.exists():
         raise HTTPException(404, "Rendered video file does not exist")
@@ -206,10 +215,8 @@ async def get_project_video(project_id: UUID, db: AsyncSession = Depends(get_db)
 
 
 @router.get("/projects/{project_id}/subtitles")
-async def get_project_subtitles(project_id: UUID, db: AsyncSession = Depends(get_db)):
-    project = await db.get(VideoProject, project_id)
-    if not project:
-        raise HTTPException(404, "Project not found")
+async def get_project_subtitles(project_id: UUID, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    project = await _get_owned_project(project_id, db, principal)
     path = _safe_output_path((project.data or {}).get("editor", {}).get("subtitle_path"))
     if not path.exists():
         raise HTTPException(404, "Subtitle file does not exist")
@@ -217,10 +224,8 @@ async def get_project_subtitles(project_id: UUID, db: AsyncSession = Depends(get
 
 
 @router.get("/projects/{project_id}/thumbnail")
-async def get_project_thumbnail(project_id: UUID, db: AsyncSession = Depends(get_db)):
-    project = await db.get(VideoProject, project_id)
-    if not project:
-        raise HTTPException(404, "Project not found")
+async def get_project_thumbnail(project_id: UUID, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    project = await _get_owned_project(project_id, db, principal)
     raw_path = (project.data or {}).get("thumbnail", {}).get("path")
     if raw_path:
         path = _safe_output_path(raw_path)
@@ -232,9 +237,7 @@ async def get_project_thumbnail(project_id: UUID, db: AsyncSession = Depends(get
 
 
 @router.get("/projects/{project_id}/assets")
-async def get_project_assets(project_id: UUID, db: AsyncSession = Depends(get_db)):
-    project = await db.get(VideoProject, project_id)
-    if not project:
-        raise HTTPException(404, "Project not found")
+async def get_project_assets(project_id: UUID, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    project = await _get_owned_project(project_id, db, principal)
     production = (project.data or {}).get("production", {})
     return {"project_id": str(project_id), "provider": production.get("provider"), "manifest_path": production.get("manifest_path"), "assets": production.get("assets", [])}
