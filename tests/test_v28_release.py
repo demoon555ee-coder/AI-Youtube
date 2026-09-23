@@ -107,7 +107,7 @@ def test_compose_defaults_target_current_release():
         if fn == "docker-compose.production.yml":
             assert "4.2.4" in text
         elif fn != "docker-compose.bluegreen.yml":
-            assert "4.2.1" in text
+            assert "4.2.4" in text
 
 
 def test_switch_slot_requires_proxy_reload():
