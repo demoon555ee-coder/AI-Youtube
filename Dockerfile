@@ -19,6 +19,7 @@ COPY app ./app
 COPY scripts ./scripts
 RUN cd /app/app/remotion \
     && npm install --omit=dev --no-audit --no-fund \
+    && npx remotion browser ensure \
     && mkdir -p /app/data/output /app/secrets \
     && chown -R app:app /app
 
