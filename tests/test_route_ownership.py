@@ -18,14 +18,18 @@ ROUTE_OWNERSHIP_REQUIREMENTS = {
 }
 
 
-def _route_functions() -> dict[str, ast.AsyncFunctionDef]:
-    source = Path("app/api/routes.py").read_text(encoding="utf-8")
+def _route_functions(path: str) -> dict[str, ast.AsyncFunctionDef]:
+    source = Path(path).read_text(encoding="utf-8")
     tree = ast.parse(source)
     return {
         node.name: node
         for node in tree.body
         if isinstance(node, ast.AsyncFunctionDef)
     }
+
+
+def _source(path: str) -> str:
+    return Path(path).read_text(encoding="utf-8")
 
 
 def _calls(node: ast.AsyncFunctionDef, function_name: str) -> bool:
@@ -38,7 +42,7 @@ def _calls(node: ast.AsyncFunctionDef, function_name: str) -> bool:
 
 
 def test_project_and_dashboard_routes_require_principal_and_ownership() -> None:
-    routes = _route_functions()
+    routes = _route_functions("app/api/routes.py")
 
     for route_name, ownership_helper in ROUTE_OWNERSHIP_REQUIREMENTS.items():
         node = routes[route_name]
@@ -47,3 +51,25 @@ def test_project_and_dashboard_routes_require_principal_and_ownership() -> None:
         assert _calls(node, ownership_helper), (
             f"{route_name} must enforce resource ownership through {ownership_helper}"
         )
+
+
+def test_workflow_research_and_intelligence_boundaries_are_authenticated() -> None:
+    expectations = {
+        "app/api/workflows.py": (
+            {"get_workflow", "cancel_workflow", "workflow_events"},
+            "principal.scope_key",
+        ),
+        "app/api/research.py": ({"run_research"}, "principal.scope_key"),
+        "app/api/intelligence.py": (
+            {"intelligence_overview", "intelligence_blueprints", "intelligence_blueprint"},
+            "principal.scope_key",
+        ),
+    }
+    for path, (route_names, ownership_marker) in expectations.items():
+        source = _source(path)
+        routes = _route_functions(path)
+        assert ownership_marker in source, f"{path} must enforce ownership"
+        for route_name in route_names:
+            node = routes[route_name]
+            arguments = {arg.arg for arg in node.args.args}
+            assert "principal" in arguments, f"{path}:{route_name} must require a Principal dependency"
