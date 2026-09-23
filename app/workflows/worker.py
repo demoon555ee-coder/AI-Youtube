@@ -3,7 +3,7 @@ import contextlib
 import socket
 import uuid
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -111,7 +111,7 @@ from app.workflows.engine import WorkflowWorker as EngineWorkflowWorker
 
 class ObservableWorkflowWorker(EngineWorkflowWorker):
     async def heartbeat(self, *, status: str, active_workflow_id: uuid.UUID | None = None) -> None:
-        now = datetime.utcnow()
+        now = _utcnow()
         async with self.session_factory() as db:
             row_q = await db.execute(select(WorkerHeartbeat).where(WorkerHeartbeat.worker_id == self.worker_id).with_for_update())
             row = row_q.scalar_one_or_none()
