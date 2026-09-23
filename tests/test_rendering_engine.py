@@ -88,7 +88,7 @@ async def test_remotion_renderer_writes_timeline_artifact(monkeypatch, tmp_path)
         (project_dir / "final.mp4").write_bytes(b"0" * 12000)
 
     monkeypatch.setattr("app.rendering.service.synthesize_with_chunking", fake_tts)
-    monkeypatch.setattr("app.rendering.remotion.probe_duration", fake_probe)
+    monkeypatch.setattr("app.rendering.service.probe_duration", fake_probe)
     monkeypatch.setattr(RemotionRenderer, "_run_remotion", fake_run)
 
     renderer = RemotionRenderer(str(tmp_path), tts=FakeTTS())
