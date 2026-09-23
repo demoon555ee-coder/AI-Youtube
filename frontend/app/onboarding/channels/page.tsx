@@ -10,6 +10,7 @@ type Channel = {
   niche?: string;
   language: string;
   youtube_channel_id?: string | null;
+  youtube_connected?: boolean;
   thumbnail_url?: string | null;
 };
 
@@ -116,7 +117,7 @@ function ChannelOnboardingContent() {
           <div className="channelCardBody">
             <div className="channelCardTitle">{channel.name}</div>
             <div className="mini">{channel.niche || "YouTube channel"}{youtubeId}</div>
-            <div className="channelCardMeta"><span>{channel.youtube_channel_id ? <span className="channelConnected">Connected</span> : "Platform workspace"}</span><span>{selectedLabel}</span></div>
+            <div className="channelCardMeta"><span>{channel.youtube_connected ? <span className="channelConnected">Connected</span> : channel.youtube_channel_id ? "YouTube channel" : "Platform workspace"}</span><span>{selectedLabel}</span></div>
           </div>
         </button>;
       })}
