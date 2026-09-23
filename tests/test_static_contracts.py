@@ -82,6 +82,6 @@ def test_application_version_matches_current_changelog_release():
     config = (ROOT / "app/config.py").read_text(encoding="utf-8")
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     app_version = re.search(r'app_version: str = "([^"]+)"', config).group(1)
-    changelog_version = re.search(r'^## ([0-9]+\\.[0-9]+\\.[0-9]+) — ', changelog, re.MULTILINE).group(1)
+    changelog_version = re.search(r'^## ([0-9]+\.[0-9]+\.[0-9]+) — ', changelog, re.MULTILINE).group(1)
     assert app_version == changelog_version
     assert f"# YouTube AI Platform v{app_version}" in (ROOT / "README.md").read_text(encoding="utf-8")
