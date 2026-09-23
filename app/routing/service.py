@@ -92,7 +92,7 @@ class ProviderRouter:
             key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key", "") or settings.image_api_key or settings.llm_api_key)
             return bool((cfg.get("base_url") or cfg.get("endpoint") or settings.image_endpoint or "https://api.openai.com/v1") and (key or settings.image_api_key or settings.llm_api_key) and (cfg.get("model") or settings.image_model or "gpt-image-2"))
         if candidate.kind == "runway":
-            return bool(settings.runway_api_key or settings.video_api_key or os.getenv("RUNWAY_API_KEY", "") or os.getenv("RUNWAYML_API_SECRET", ""))
+            return bool(settings.runway_api_key or settings.video_api_key or os.getenv("RUNWAY_API_KEY", "") or os.getenv("RUNWAYML_API_SECRET", "") or os.getenv("RUNWAY_API_SECRET", "") or os.getenv("RUNWAY_API", ""))
         if candidate.kind == "openai_tts":
             key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key", "") or settings.tts_api_key or settings.llm_api_key)
             return bool((cfg.get("base_url") or cfg.get("endpoint") or settings.tts_endpoint or "https://api.openai.com/v1") and (key or settings.tts_api_key or settings.llm_api_key) and (cfg.get("model") or settings.tts_model or "gpt-4o-mini-tts"))
