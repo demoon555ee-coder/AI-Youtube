@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg espeak fonts-dejavu \
+    && apt-get install -y --no-install-recommends ffmpeg espeak fonts-dejavu nodejs npm chromium \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system --gid 10001 app \
     && useradd --system --uid 10001 --gid app --home /app --shell /usr/sbin/nologin app
@@ -17,7 +17,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app ./app
 COPY scripts ./scripts
-RUN mkdir -p /app/data/output /app/secrets \
+RUN cd /app/app/remotion \
+    && npm install --omit=dev --no-audit --no-fund \
+    && mkdir -p /app/data/output /app/secrets \
     && chown -R app:app /app
 
 USER app
