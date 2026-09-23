@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlparse
@@ -43,8 +44,18 @@ def validate_production_settings() -> list[ValidationIssue]:
         issues.append(ValidationIssue("localhost_cors", "CORS_ORIGINS cannot include localhost in production"))
     if settings.database_url.startswith("postgresql+asyncpg://postgres:postgres@"):
         issues.append(ValidationIssue("default_database_credentials", "DATABASE_URL uses development credentials"))
-    if not Path(settings.google_client_secrets_file).exists():
-        issues.append(ValidationIssue("missing_google_client_secret", "Google OAuth client secret file is missing"))
+    google_config_valid = False
+    if settings.google_client_secrets_json.strip():
+        try:
+            raw = json.loads(settings.google_client_secrets_json)
+            config = raw.get("web") or raw.get("installed") or raw if isinstance(raw, dict) else {}
+            google_config_valid = isinstance(config, dict) and bool(config.get("client_id")) and bool(config.get("client_secret"))
+        except json.JSONDecodeError:
+            google_config_valid = False
+    else:
+        google_config_valid = Path(settings.google_client_secrets_file).exists()
+    if not google_config_valid:
+        issues.append(ValidationIssue("missing_google_client_secret", "Google OAuth client secret configuration is missing or invalid"))
     if settings.billing_provider == "mock":
         issues.append(ValidationIssue("mock_billing_provider", "BILLING_PROVIDER must be a real provider in production"))
     if not (settings.billing_webhook_secret or settings.billing_webhook_secrets):
