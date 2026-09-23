@@ -65,6 +65,23 @@ def test_workflow_research_and_intelligence_boundaries_are_authenticated() -> No
             "principal.scope_key",
         ),
     }
+    expectations.update(
+        {
+            "app/api/brain.py": (
+                {"rebuild_channel_brain", "get_channel_brain", "optimize_channel_video"},
+                "principal.scope_key",
+            ),
+            "app/api/content.py": (
+                {"content_generate_ideas", "content_list_ideas", "content_select_idea", "content_create_project"},
+                "principal.scope_key",
+            ),
+            "app/api/experiments.py": (
+                {"list_experiments", "create_experiment", "create_from_optimization", "add_observation", "evaluate_experiment", "close_experiment"},
+                "principal.scope_key",
+            ),
+        }
+    )
+
     for path, (route_names, ownership_marker) in expectations.items():
         source = _source(path)
         routes = _route_functions(path)
