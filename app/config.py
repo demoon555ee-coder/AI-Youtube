@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     app_env: str = "development"
-    app_version: str = "4.2.1"
+    app_version: str = "4.2.4"
     database_url: str = "postgresql+asyncpg://postgres:postgres@db:5432/youtube_ai"
     public_base_url: str = "http://localhost:8000"
     frontend_url: str = "http://localhost:3000"
