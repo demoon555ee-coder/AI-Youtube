@@ -110,12 +110,20 @@ class RemotionRenderer:
                 or f"Scene {index}"
             ).strip()[:240]
 
+            caption_style = str(
+                raw_scene.get("caption_style")
+                or raw_scene.get("captionStyle")
+                or "standard"
+            ).strip().lower()
+            if caption_style not in {"standard", "highlight", "minimal"}:
+                caption_style = "standard"
             caption = {
                 "text": narration[:240],
                 "startMs": round(cursor_seconds * 1000),
                 "endMs": round((cursor_seconds + audio_duration) * 1000),
                 "timestampMs": None,
                 "confidence": None,
+                "style": caption_style,
             }
 
             manifest_scenes.append(
@@ -127,7 +135,7 @@ class RemotionRenderer:
                     "onScreenText": on_screen,
                     "motion": str(raw_scene.get("motion") or "slow_push_in"),
                     "transition": str(raw_scene.get("transition") or "cut"),
-                    "captionStyle": str(raw_scene.get("caption_style") or raw_scene.get("captionStyle") or "standard"),
+                    "captionStyle": caption_style,
                     "caption": caption,
                 }
             )

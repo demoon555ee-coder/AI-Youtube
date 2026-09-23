@@ -20,6 +20,9 @@ type SceneAsset = {
   color?: string;
 };
 
+type CaptionStyle = "standard" | "highlight" | "minimal";
+type AppCaption = Caption & {style?: CaptionStyle};
+
 type Scene = {
   scene: number;
   durationFrames: number;
@@ -28,8 +31,8 @@ type Scene = {
   onScreenText: string;
   motion?: string;
   transition?: string;
-  captionStyle?: "standard" | "highlight" | "minimal";
-  caption?: Caption;
+  captionStyle?: CaptionStyle;
+  caption?: AppCaption;
 };
 
 export type RenderManifest = {
@@ -39,7 +42,7 @@ export type RenderManifest = {
   fps: number;
   durationInFrames: number;
   scenes: Scene[];
-  captions: Caption[];
+  captions: AppCaption[];
 };
 
 const fitMediaStyle: React.CSSProperties = {
@@ -81,6 +84,32 @@ const captionBoxStyle: React.CSSProperties = {
   lineHeight: 1.18,
   textAlign: "center",
   textShadow: "0 2px 7px rgba(0,0,0,0.75)",
+};
+
+const captionStyles: Record<CaptionStyle, React.CSSProperties> = {
+  standard: {
+    background: "rgba(0,0,0,0.58)",
+    color: "white",
+    fontSize: 34,
+    padding: "12px 22px",
+    borderRadius: 18,
+  },
+  highlight: {
+    background: "rgba(255,255,255,0.92)",
+    color: "black",
+    fontSize: 38,
+    padding: "10px 24px",
+    borderRadius: 14,
+    textShadow: "none",
+  },
+  minimal: {
+    background: "transparent",
+    color: "white",
+    fontSize: 28,
+    padding: "4px 8px",
+    borderRadius: 0,
+    textShadow: "0 2px 7px rgba(0,0,0,0.85)",
+  },
 };
 
 const sceneColors = [
@@ -158,7 +187,7 @@ const SceneLayer: React.FC<{scene: Scene}> = ({scene}) => {
   );
 };
 
-const CaptionTrack: React.FC<{captions: Caption[]}> = ({captions}) => {
+const CaptionTrack: React.FC<{captions: AppCaption[]}> = ({captions}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const nowMs = (frame / fps) * 1000;
@@ -168,7 +197,18 @@ const CaptionTrack: React.FC<{captions: Caption[]}> = ({captions}) => {
     return null;
   }
 
-  return <div style={{...captionBoxStyle, ...(active.text.length > 80 ? {fontSize: 30} : {})}}>{active.text}</div>;
+  const style = active.style ?? "standard";
+  return (
+    <div
+      style={{
+        ...captionBoxStyle,
+        ...captionStyles[style],
+        ...(active.text.length > 80 ? {fontSize: style === "minimal" ? 24 : 30} : {}),
+      }}
+    >
+      {active.text}
+    </div>
+  );
 };
 
 export const MainComposition: React.FC<RenderManifest> = (props) => {

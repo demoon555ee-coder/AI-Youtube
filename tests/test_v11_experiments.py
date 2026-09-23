@@ -44,3 +44,30 @@ async def test_scene_director_mock_is_deterministic():
     assert result["scenes"][0]["asset_type"] in {"image", "video", "graphic"}
     assert result["scenes"][1]["scene"] == 2
     assert result["scenes"][1]["duration"] == 6
+
+
+def test_experiment_thumbnail_variants_use_physical_artifacts():
+    from app.experiments.engine import ExperimentEngine
+
+    report = SimpleNamespace(
+        actions=["Test an alternative thumbnail"],
+        hypotheses=["A different text treatment may improve click-through"],
+    )
+    project = SimpleNamespace(
+        topic="AI Agents",
+        data={
+            "title": "AI Agents",
+            "hook": "See the reason",
+            "thumbnail": {
+                "variants": [
+                    {"variant_id": "control", "path": "/output/p/thumbnail.png", "axis": "text_presence", "media_type": "image/png"},
+                    {"variant_id": "variant_a", "path": "/output/p/thumbnail_variant_a.png", "axis": "text_presence", "media_type": "image/png"},
+                    {"variant_id": "variant_b", "path": "/output/p/thumbnail_variant_b.png", "axis": "text_presence", "media_type": "image/png"},
+                ]
+            },
+        },
+    )
+    spec = ExperimentEngine().build_from_optimization(report=report, project=project)
+    assert spec["dimension"] == "thumbnail"
+    assert spec["variants"]["variant_a"]["artifact_path"].endswith("thumbnail_variant_a.png")
+    assert spec["variants"]["variant_b"]["variant_axis"] == "text_presence"
