@@ -13,7 +13,7 @@ def _normalize_database_url(database_url: str) -> tuple[URL, bool]:
     # asyncpg relies on prepared statements and can stall during startup when
     # routed through the transaction pooler.
     if url.host and "-pooler." in url.host:
-        url = url.set(hostname=url.host.replace("-pooler.", "."))
+        url = url.set(host=url.host.replace("-pooler.", "."))
 
     query = dict(url.query)
     sslmode = str(query.pop("sslmode", "")).lower()
