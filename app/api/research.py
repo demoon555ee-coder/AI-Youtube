@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
+from app.auth.security import Principal, get_current_principal
 from app.db.session import get_db
+from app.models.auth import Channel
 from app.research.service import ResearchService
 from pydantic import BaseModel, Field
 
@@ -14,7 +17,19 @@ class ResearchRequest(BaseModel):
 
 
 @router.post("/channels/{channel_id}")
-async def run_research(channel_id: str, payload: ResearchRequest, db: AsyncSession = Depends(get_db)):
+async def run_research(
+    channel_id: str,
+    payload: ResearchRequest,
+    db: AsyncSession = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    try:
+        channel_uuid = UUID(channel_id)
+    except ValueError as exc:
+        raise HTTPException(404, "Channel not found") from exc
+    channel = await db.get(Channel, channel_uuid)
+    if not channel or channel.owner_id != principal.scope_key:
+        raise HTTPException(404, "Channel not found")
     try:
         report = await ResearchService().run(
             db,
