@@ -52,14 +52,14 @@ class ProductionAgent(BaseAgent):
         owner_id = str(input_data.get("owner_id") or "local-user")
         routes: dict[str, dict[str, Any]] = {}
         notes: list[dict[str, Any]] = []
-        for raw_scene in storyboard.get("scenes", []):
-            scene_no = int(raw_scene.get("scene", len(notes) + 1))
+        for index, raw_scene in enumerate(storyboard.get("scenes", []), start=1):
+            scene_no = int(raw_scene.get("scene", index))
             asset_type = str(raw_scene.get("asset_type", "image")).strip().lower()
             use_stock = asset_type == "broll" or bool(raw_scene.get("use_stock")) or str(raw_scene.get("media_source", "")).strip().lower() == "stock"
             if not use_stock:
                 continue
             duration = max(float(raw_scene.get("duration", 5) or 5), 0.5)
-            stock_kind = str(raw_scene.get("stock_media_type") or "video" if asset_type == "broll" else "image").strip().lower()
+            stock_kind = str(raw_scene.get("stock_media_type") or ("video" if asset_type == "broll" else "image")).strip().lower()
             service = "video" if stock_kind in {"video", "broll"} else "image"
             capability = "stock_broll" if service == "video" else "stock"
             try:
