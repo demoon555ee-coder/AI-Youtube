@@ -42,3 +42,14 @@ def test_stock_media_contract_is_present_and_attribution_is_preserved():
     assert '"pexels_video"' in router
     assert '"stock_broll": True' in router
     assert '"attribution": result.get("attribution")' in service
+
+
+def test_generation_routing_cannot_select_stock_provider():
+    router = (ROOT / "app/routing/service.py").read_text()
+
+    assert '"stock": True' in router
+    assert '"stock_broll": True' in router
+    assert '"generative": True' in router
+    assert '("production", "visual", 5, {"image", "generative"})' in router
+    assert '("production_video", "video", 5, {"video", "generative"})' in router
+    assert '("thumbnail", "image", 1, {"image", "generative"})' in router

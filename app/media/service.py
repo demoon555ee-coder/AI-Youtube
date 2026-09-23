@@ -41,6 +41,7 @@ class AssetFactory:
         *,
         project_id: str,
         storyboard: dict[str, Any],
+        scene_routes: dict[str, dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         project_dir = self.output_dir / project_id / "assets"
         project_dir.mkdir(parents=True, exist_ok=True)
@@ -55,9 +56,17 @@ class AssetFactory:
                 or "cinematic YouTube visual"
             )
             motion = self._is_motion_asset(scene)
-            provider = self.video_provider if motion else self.image_provider
+            route = (scene_routes or {}).get(str(scene_no)) or {}
+            routed_provider = route.get("video" if motion else "image")
+            if routed_provider:
+                provider = get_video_provider(routed_provider.get("provider"), routed_provider.get("config") or {}) if motion else get_image_provider(routed_provider.get("provider"), routed_provider.get("config") or {})
+            else:
+                provider = self.video_provider if motion else self.image_provider
             output_path = project_dir / f"scene_{scene_no:03d}{'.mp4' if motion else '.png'}"
             metadata = {"scene": scene_no, "asset_type": scene.get("asset_type", "image")}
+            if routed_provider:
+                metadata["routing_decision_id"] = routed_provider.get("decision_id")
+                metadata["routing_reason"] = routed_provider.get("reason")
             metadata["idempotency_key"] = f"{self.media_job_context.get('project_id', project_id)}:{self.media_job_context.get('attempt', 1)}:{scene_no}"
             if motion and provider.name == "runway":
                 source_image = str(
@@ -105,6 +114,7 @@ class AssetFactory:
                     "transition": scene.get("transition", "cut"),
                     "duration_seconds": duration,
                     "external_job_id": result.get("external_job_id"),
+                    "routing": routed_provider,
                     "source_url": result.get("source_url"),
                     "attribution": result.get("attribution"),
                     "usage": result.get("usage", {}),

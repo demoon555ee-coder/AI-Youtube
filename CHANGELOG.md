@@ -1,5 +1,11 @@
 # Changelog
 
+## 4.2.3 — Capability-aware Media Routing
+- Prevented stock providers from being selected for ordinary generative production and thumbnail tasks.
+- Added per-scene stock routing for `broll` scenes with automatic fallback to the generative route when stock media is unavailable.
+- Preserved Pexels image formats returned by the API instead of forcing JPEG output.
+- Added regression coverage for capability-aware routing and stock B-roll selection.
+
 ## 4.2.2 — Pexels Stock Media Routing
 - Added Pexels photo and video providers with search, media selection, download validation and retry handling.
 - Added 24-hour in-process search caching to reduce repeated Pexels API calls.
