@@ -103,8 +103,12 @@ def validate_production_settings() -> list[ValidationIssue]:
 
         if settings.image_provider == "mock_png" or settings.visual_provider == "mock_png":
             issues.append(ValidationIssue("mock_image_provider", "IMAGE_PROVIDER/VISUAL_PROVIDER must not use mock_png in production"))
-        elif settings.image_provider == "openai_image" and not (settings.image_api_key or settings.llm_api_key):
+        elif settings.image_provider in {"openai_image"} and not (settings.image_api_key or settings.llm_api_key):
             issues.append(ValidationIssue("missing_image_key", "IMAGE_API_KEY or LLM_API_KEY is required for openai_image in production"))
+        elif settings.image_provider == "stability_image" and not settings.stability_api_key:
+            issues.append(ValidationIssue("missing_stability_api_key", "STABILITY_API_KEY is required for stability_image in production"))
+        elif settings.image_provider == "pexels_photo" and not settings.pexels_api_key:
+            issues.append(ValidationIssue("missing_pexels_api_key", "PEXELS_API_KEY is required for pexels_photo in production"))
         elif settings.image_provider == "http_image" and not settings.image_endpoint:
             issues.append(ValidationIssue("missing_image_endpoint", "IMAGE_ENDPOINT is required for http_image in production"))
 
@@ -112,6 +116,8 @@ def validate_production_settings() -> list[ValidationIssue]:
             issues.append(ValidationIssue("mock_video_provider", "VIDEO_PROVIDER must be a real provider in production"))
         elif settings.video_provider == "runway" and not (settings.runway_api_key or settings.video_api_key):
             issues.append(ValidationIssue("missing_runway_api_key", "RUNWAY_API_KEY or VIDEO_API_KEY is required for the runway provider in production"))
+        elif settings.video_provider == "pexels_video" and not settings.pexels_api_key:
+            issues.append(ValidationIssue("missing_pexels_api_key", "PEXELS_API_KEY is required for pexels_video in production"))
         elif settings.video_provider == "http_video" and not settings.video_endpoint:
             issues.append(ValidationIssue("missing_video_endpoint", "VIDEO_ENDPOINT is required for http_video in production"))
 
