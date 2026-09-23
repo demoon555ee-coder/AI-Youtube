@@ -292,11 +292,11 @@ class ProviderRouter:
             ("script", "llm", 1, {"json"}),
             ("storyboard", "llm", 1, {"json"}),
             ("scene_director", "llm", 1, {"json"}),
-            ("production", "visual", 5, {"image"}),
-            ("production_video", "video", 5, {"video"}),
+            ("production", "visual", 5, {"image", "generative"}),
+            ("production_video", "video", 5, {"video", "generative"}),
             ("tts", "tts", 1, {"voice"}),
             ("editor", "render", 1, {"render"}),
-            ("thumbnail", "image", 1, {"image"}),
+            ("thumbnail", "image", 1, {"image", "generative"}),
             ("qa", "llm", 1, {"json"}),
         ]
         plan: dict[str, dict[str, Any]] = {}
