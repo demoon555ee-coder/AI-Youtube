@@ -1,8 +1,9 @@
 from __future__ import annotations
 import os
 import shutil
+import re
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Iterable
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +13,13 @@ from app.models import Channel, CostEvent, Portfolio, PortfolioChannel, Provider
 from app.portfolio.service import PortfolioService
 from app.routing.policy import Candidate, TIER_ORDER, rank_candidates
 from app.resilience.provider import ProviderReliabilityService
+
+_RUNWAY_API_KEY_RE = re.compile(r"^key_[0-9a-f]{128}$", re.IGNORECASE)
+
+
+def _is_valid_runway_api_key(value: str) -> bool:
+    return bool(_RUNWAY_API_KEY_RE.fullmatch(str(value or "").strip()))
+
 
 DEFAULTS: dict[str, list[dict[str, Any]]] = {
     "llm": [
@@ -92,7 +100,17 @@ class ProviderRouter:
             key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key", "") or settings.image_api_key or settings.llm_api_key)
             return bool((cfg.get("base_url") or cfg.get("endpoint") or settings.image_endpoint or "https://api.openai.com/v1") and (key or settings.image_api_key or settings.llm_api_key) and (cfg.get("model") or settings.image_model or "gpt-image-2"))
         if candidate.kind == "runway":
-            return bool(settings.runway_api_key or settings.video_api_key or os.getenv("RUNWAY_API_KEY", "") or os.getenv("RUNWAYML_API_SECRET", "") or os.getenv("RUNWAY_API_SECRET", "") or os.getenv("RUNWAY_API", "") or os.getenv("Runway_API", ""))
+            keys = (
+                cfg.get("api_key"),
+                settings.runway_api_key,
+                settings.video_api_key,
+                os.getenv("RUNWAY_API_KEY", ""),
+                os.getenv("RUNWAYML_API_SECRET", ""),
+                os.getenv("RUNWAY_API_SECRET", ""),
+                os.getenv("RUNWAY_API", ""),
+                os.getenv("Runway_API", ""),
+            )
+            return any(_is_valid_runway_api_key(key) for key in keys)
         if candidate.kind == "openai_tts":
             key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key", "") or settings.tts_api_key or settings.llm_api_key)
             return bool((cfg.get("base_url") or cfg.get("endpoint") or settings.tts_endpoint or "https://api.openai.com/v1") and (key or settings.tts_api_key or settings.llm_api_key) and (cfg.get("model") or settings.tts_model or "gpt-4o-mini-tts"))
@@ -171,7 +189,7 @@ class ProviderRouter:
         return float(await self.db.scalar(stmt) or 0.0)
 
     async def _feasible(self, portfolio: Portfolio, candidate: Candidate, service: str, estimated: float, channel_id=None) -> tuple[bool, list[str]]:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
         month_start = datetime(now.year, now.month, 1)
         day_start = datetime(now.year, now.month, now.day)
         reasons: list[str] = []
