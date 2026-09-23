@@ -3,14 +3,14 @@ services:
     image: postgres:16
     environment:
       POSTGRES_DB: youtube_ai
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: youtube_ai
+      POSTGRES_PASSWORD: youtube_ai
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d youtube_ai"]
+      test: ["CMD-SHELL", "pg_isready -U youtube_ai -d youtube_ai"]
       interval: 5s
       timeout: 5s
       retries: 12
