@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
-from app.auth.security import Principal, get_current_principal
+from app.auth.security import Principal, permission_dependency
 from app.db.session import get_db
 from app.models import Channel
 from app.content.intelligence_service import build_for_idea, list_blueprints, serialize_blueprint
@@ -18,7 +18,7 @@ class BlueprintRequest(BaseModel):
 
 
 @router.get("/channels/{channel_id}/overview")
-async def intelligence_overview(channel_id: str, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+async def intelligence_overview(channel_id: str, db: AsyncSession = Depends(get_db), principal: Principal = Depends(permission_dependency("read"))):
     try:
         channel_uuid = UUID(channel_id)
     except ValueError as exc:
@@ -44,7 +44,7 @@ async def intelligence_overview(channel_id: str, db: AsyncSession = Depends(get_
 
 
 @router.get("/channels/{channel_id}/blueprints")
-async def intelligence_blueprints(channel_id: str, limit: int = 50, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+async def intelligence_blueprints(channel_id: str, limit: int = 50, db: AsyncSession = Depends(get_db), principal: Principal = Depends(permission_dependency("read"))):
     try:
         channel_uuid = UUID(channel_id)
     except ValueError as exc:
@@ -57,7 +57,7 @@ async def intelligence_blueprints(channel_id: str, limit: int = 50, db: AsyncSes
 
 
 @router.post("/channels/{channel_id}/ideas/{idea_id}/blueprint")
-async def intelligence_blueprint(channel_id: str, idea_id: str, payload: BlueprintRequest, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+async def intelligence_blueprint(channel_id: str, idea_id: str, payload: BlueprintRequest, db: AsyncSession = Depends(get_db), principal: Principal = Depends(permission_dependency("content:write"))):
     try:
         channel_uuid = UUID(channel_id)
     except ValueError as exc:
