@@ -124,6 +124,9 @@ class RemotionRenderer:
                     "asset": asset_payload,
                     "audioSrc": audio_source_rel,
                     "onScreenText": on_screen,
+                    "motion": str(raw_scene.get("motion") or "slow_push_in"),
+                    "transition": str(raw_scene.get("transition") or "cut"),
+                    "captionStyle": str(raw_scene.get("caption_style") or raw_scene.get("captionStyle") or "standard"),
                     "caption": caption,
                 }
             )
