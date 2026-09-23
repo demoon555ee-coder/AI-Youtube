@@ -79,6 +79,14 @@ def test_workflow_research_and_intelligence_boundaries_are_authenticated() -> No
                 {"list_experiments", "create_experiment", "create_from_optimization", "add_observation", "evaluate_experiment", "close_experiment"},
                 "principal.scope_key",
             ),
+            "app/api/opportunity_intelligence.py": (
+                {"analyze", "decisions", "runs"},
+                "principal.scope_key",
+            ),
+            "app/api/research_intelligence.py": (
+                {"scan", "opportunities", "graph", "generate_ideas_from_opportunities"},
+                "principal.scope_key",
+            ),
         }
     )
 
