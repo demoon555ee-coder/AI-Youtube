@@ -26,6 +26,9 @@ type Scene = {
   asset: SceneAsset;
   audioSrc?: string;
   onScreenText: string;
+  motion?: string;
+  transition?: string;
+  captionStyle?: "standard" | "highlight" | "minimal";
   caption?: Caption;
 };
 
@@ -111,20 +114,29 @@ const SceneLayer: React.FC<{scene: Scene}> = ({scene}) => {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
+  const motion = scene.motion ?? "slow_push_in";
+  const pan = interpolate(frame, [0, scene.durationFrames], [0, motion.includes("left") ? -28 : motion.includes("right") ? 28 : 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const zoom = motion.includes("zoom") || motion.includes("push") ? scale : 1;
+  const mediaTransform = `translateX(${pan}px) scale(${zoom})`;
+  const transition = (scene.transition ?? "cut").toLowerCase();
+  const transitionFade = transition === "cut" ? 1 : fade;
 
   return (
-    <AbsoluteFill style={{opacity: fade}}>
+    <AbsoluteFill style={{opacity: transitionFade}}>
       {scene.asset.kind === "video" && scene.asset.src ? (
         <OffthreadVideo
           src={staticFile(scene.asset.src)}
           muted
           loop
-          style={{...fitMediaStyle, transform: `scale(${scale})`}}
+          style={{...fitMediaStyle, transform: mediaTransform}}
         />
       ) : scene.asset.kind === "image" && scene.asset.src ? (
         <CanvasImage
           src={staticFile(scene.asset.src)}
-          style={{...fitMediaStyle, transform: `scale(${scale})`}}
+          style={{...fitMediaStyle, transform: mediaTransform}}
         />
       ) : (
         <AbsoluteFill style={{backgroundColor: scene.asset.color ?? pickColor(scene.scene)}} />
@@ -156,7 +168,7 @@ const CaptionTrack: React.FC<{captions: Caption[]}> = ({captions}) => {
     return null;
   }
 
-  return <div style={captionBoxStyle}>{active.text}</div>;
+  return <div style={{...captionBoxStyle, ...(active.text.length > 80 ? {fontSize: 30} : {})}}>{active.text}</div>;
 };
 
 export const MainComposition: React.FC<RenderManifest> = (props) => {
