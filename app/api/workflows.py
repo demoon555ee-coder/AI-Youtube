@@ -10,7 +10,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 
 from app.db.session import SessionLocal
-from app.auth.security import Principal, get_current_principal
+from app.auth.security import Principal, get_current_principal, permission_dependency
 from app.models import Channel, WorkflowEvent, WorkflowRun, WorkflowStep, VideoProject
 
 router = APIRouter(prefix="/api/v1/workflows", tags=["workflows"])
@@ -31,7 +31,7 @@ async def _get_owned_workflow(workflow_id: UUID, principal: Principal) -> Workfl
 
 
 @router.get("/{workflow_id}")
-async def get_workflow(workflow_id: UUID, principal: Principal = Depends(get_current_principal)):
+async def get_workflow(workflow_id: UUID, principal: Principal = Depends(permission_dependency("read"))):
     async with SessionLocal() as db:
         run = await db.get(WorkflowRun, workflow_id)
         if not run:
@@ -74,7 +74,7 @@ async def get_workflow(workflow_id: UUID, principal: Principal = Depends(get_cur
 
 
 @router.post("/{workflow_id}/cancel")
-async def cancel_workflow(workflow_id: UUID, principal: Principal = Depends(get_current_principal)):
+async def cancel_workflow(workflow_id: UUID, principal: Principal = Depends(permission_dependency("content:write"))):
     async with SessionLocal() as db:
         run = await db.get(WorkflowRun, workflow_id, with_for_update=True)
         if not run:
@@ -100,7 +100,7 @@ async def cancel_workflow(workflow_id: UUID, principal: Principal = Depends(get_
 async def workflow_events(
     workflow_id: UUID,
     after: int = Query(default=0, ge=0),
-    principal: Principal = Depends(get_current_principal),
+    principal: Principal = Depends(permission_dependency("read")),
 ):
     """Server-Sent Events stream. It polls PostgreSQL so it also works without Redis/WebSockets."""
 
