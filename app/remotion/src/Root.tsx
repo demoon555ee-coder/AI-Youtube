@@ -12,14 +12,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import {Audio} from "@remotion/media";
-
-type Caption = {
-  text: string;
-  startMs: number;
-  endMs: number;
-  timestampMs: number | null;
-  confidence: number | null;
-};
+import type {Caption} from "@remotion/captions";
 
 type SceneAsset = {
   kind: "video" | "image" | "color";
