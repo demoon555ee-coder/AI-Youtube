@@ -25,10 +25,12 @@ DEFAULTS: dict[str, list[dict[str, Any]]] = {
         {"provider": "mock_png", "kind": "mock_png", "tier": "economy", "priority": 10, "unit": "asset", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
         {"provider": "openai_image", "kind": "openai_image", "tier": "premium", "priority": 100, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
         {"provider": "http_image", "kind": "http_image", "tier": "standard", "priority": 80, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
+        {"provider": "stability_image", "kind": "stability_image", "tier": "premium", "priority": 110, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True}},
     ],
     "tts": [
         {"provider": "espeak", "kind": "espeak", "tier": "economy", "priority": 10, "unit": "minute", "unit_cost_usd": 0.0, "capabilities": {"voice": True}},
         {"provider": "openai_tts", "kind": "openai_tts", "tier": "premium", "priority": 100, "unit": "minute", "unit_cost_usd": 0.0, "capabilities": {"voice": True}},
+        {"provider": "elevenlabs", "kind": "elevenlabs", "tier": "premium", "priority": 110, "unit": "minute", "unit_cost_usd": 0.0, "capabilities": {"voice": True}},
     ],
     "render": [{"provider": "ffmpeg", "kind": "ffmpeg", "tier": "economy", "priority": 10, "unit": "minute", "unit_cost_usd": 0.0, "capabilities": {"render": True}}],
     "image": [
@@ -39,6 +41,7 @@ DEFAULTS: dict[str, list[dict[str, Any]]] = {
     "video": [
         {"provider": "mock_video", "kind": "mock_video", "tier": "economy", "priority": 10, "unit": "second", "unit_cost_usd": 0.0, "capabilities": {"video": True}},
         {"provider": "http_video", "kind": "http_video", "tier": "premium", "priority": 100, "unit": "second", "unit_cost_usd": 0.0, "capabilities": {"video": True}},
+        {"provider": "runway", "kind": "runway", "tier": "premium", "priority": 110, "unit": "second", "unit_cost_usd": 0.0, "capabilities": {"video": True}},
     ],
 }
 
@@ -67,15 +70,23 @@ class ProviderRouter:
         if candidate.kind in {"mock_png", "mock_video", "espeak", "ffmpeg"}:
             return True
         cfg = candidate.config or {}
+        if candidate.kind == "youtube_data":
+            return bool(settings.youtube_research_api_key or os.getenv("YOUTUBE_RESEARCH_API_KEY", ""))
         if candidate.kind == "openai_compatible":
             key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key", ""))
             return bool((cfg.get("base_url") or settings.llm_base_url) and (key or settings.llm_api_key) and (cfg.get("model") or settings.llm_model))
+        if candidate.kind == "stability_image":
+            return bool(settings.stability_api_key or os.getenv("STABILITY_API_KEY", ""))
         if candidate.kind == "openai_image":
             key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key", "") or settings.image_api_key or settings.llm_api_key)
             return bool((cfg.get("base_url") or cfg.get("endpoint") or settings.image_endpoint or "https://api.openai.com/v1") and (key or settings.image_api_key or settings.llm_api_key) and (cfg.get("model") or settings.image_model or "gpt-image-2"))
+        if candidate.kind == "runway":
+            return bool(settings.runway_api_key or settings.video_api_key or os.getenv("RUNWAY_API_KEY", "") or os.getenv("RUNWAYML_API_SECRET", ""))
         if candidate.kind == "openai_tts":
             key = os.getenv(str(cfg.get("api_key_env", "")), "") if cfg.get("api_key_env") else str(cfg.get("api_key", "") or settings.tts_api_key or settings.llm_api_key)
             return bool((cfg.get("base_url") or cfg.get("endpoint") or settings.tts_endpoint or "https://api.openai.com/v1") and (key or settings.tts_api_key or settings.llm_api_key) and (cfg.get("model") or settings.tts_model or "gpt-4o-mini-tts"))
+        if candidate.kind == "elevenlabs":
+            return bool((settings.elevenlabs_api_key or settings.tts_api_key or os.getenv("ELEVENLABS_API_KEY", "")) and (settings.elevenlabs_voice_id or settings.tts_voice))
         if candidate.kind in {"http_json", "http_image", "http_video"}:
             endpoint_defaults = {
                 "http_json": settings.research_endpoint,

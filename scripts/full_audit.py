@@ -122,7 +122,12 @@ def production_ai_audit() -> dict:
         'orchestrator_supports_tts': 'tts_route' in orchestration,
         'media_job_model': (ROOT / 'app/models/media_job.py').exists(),
         'production_mock_ai_block': 'mock_llm_provider' in deployment and 'mock_video_provider' in deployment,
-        'production_env_real_ai': 'LLM_PROVIDER=openai_compatible' in env and 'IMAGE_PROVIDER=openai_image' in env and 'VIDEO_PROVIDER=http_video' in env,
+        'production_env_real_ai': (
+            'LLM_PROVIDER=openai_compatible' in env
+            and ('IMAGE_PROVIDER=openai_image' in env or 'IMAGE_PROVIDER=stability_image' in env)
+            and ('VIDEO_PROVIDER=http_video' in env or 'VIDEO_PROVIDER=runway' in env)
+            and ('TTS_PROVIDER=openai_tts' in env or 'TTS_PROVIDER=elevenlabs' in env)
+        ),
     }
 
 

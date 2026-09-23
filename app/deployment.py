@@ -110,10 +110,16 @@ def validate_production_settings() -> list[ValidationIssue]:
 
         if settings.video_provider == "mock_video":
             issues.append(ValidationIssue("mock_video_provider", "VIDEO_PROVIDER must be a real provider in production"))
+        elif settings.video_provider == "runway" and not (settings.runway_api_key or settings.video_api_key):
+            issues.append(ValidationIssue("missing_runway_api_key", "RUNWAY_API_KEY or VIDEO_API_KEY is required for the runway provider in production"))
         elif settings.video_provider == "http_video" and not settings.video_endpoint:
             issues.append(ValidationIssue("missing_video_endpoint", "VIDEO_ENDPOINT is required for http_video in production"))
 
-        if settings.tts_provider == "openai_tts" and not (settings.tts_api_key or settings.llm_api_key):
+        if settings.tts_provider == "elevenlabs" and not (settings.elevenlabs_api_key or settings.tts_api_key):
+            issues.append(ValidationIssue("missing_elevenlabs_api_key", "ELEVENLABS_API_KEY or TTS_API_KEY is required for the elevenlabs provider in production"))
+        elif settings.tts_provider == "elevenlabs" and not (settings.elevenlabs_voice_id or settings.tts_voice):
+            issues.append(ValidationIssue("missing_elevenlabs_voice", "ELEVENLABS_VOICE_ID or TTS_VOICE is required for the elevenlabs provider in production"))
+        elif settings.tts_provider == "openai_tts" and not (settings.tts_api_key or settings.llm_api_key):
             issues.append(ValidationIssue("missing_tts_key", "TTS_API_KEY or LLM_API_KEY is required for openai_tts in production"))
 
     return issues
