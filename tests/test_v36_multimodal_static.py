@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_v36_version_and_migration_contract():
     config = (ROOT / "app/config.py").read_text()
     migration = (ROOT / "app/db/migrations.py").read_text()
-    assert 'app_version: str = "4.2.1"' in config
+    assert 'app_version: str = "4.2.4"' in config
     assert "024_v36_multimodal_production_graph" in migration
     assert "production_multimodal_graphs" in migration
 

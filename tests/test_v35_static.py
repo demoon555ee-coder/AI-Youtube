@@ -6,7 +6,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_v35_version_and_migration():
     config = (ROOT / "app/config.py").read_text()
     migration = (ROOT / "app/db/migrations.py").read_text()
-    assert 'app_version: str = "4.2.1"' in config
+    assert 'app_version: str = "4.2.4"' in config
     assert "023_v35_creative_director" in migration
 
 

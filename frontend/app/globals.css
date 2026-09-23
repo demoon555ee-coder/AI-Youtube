@@ -33,7 +33,7 @@ h3 { font-size:15px; margin:0 0 8px; }
 .badge.success { color:var(--success); }
 .badge.warn { color:var(--warn); }
 .badge.danger { color:var(--danger); }
-.pipeline { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; }
+.pipeline { display:grid; grid-template-columns:repeat(8,1fr); gap:8px; }
 .step { border:1px solid var(--line); background:#0a1120; border-radius:12px; padding:11px 8px; min-height:78px; }
 .step .dot { width:8px; height:8px; background:#40516a; border-radius:50%; margin-bottom:9px; }
 .step.active .dot { background:var(--accent); box-shadow:0 0 0 4px rgba(125,211,252,.1); }

@@ -18,7 +18,7 @@ services:
     env_file: .env.staging
     environment:
       APP_ENV: staging
-      APP_VERSION: 4.2.1
+      APP_VERSION: 4.2.4
       DATABASE_URL: postgresql+asyncpg://staging:staging@db:5432/youtube_ai_staging
       AUTO_MIGRATE: "false"
       MIGRATION_ONLY: "true"
@@ -33,7 +33,7 @@ services:
     env_file: .env.staging
     environment:
       APP_ENV: staging
-      APP_VERSION: 4.2.1
+      APP_VERSION: 4.2.4
       DEPLOYMENT_ENV: staging
       DATABASE_URL: postgresql+asyncpg://staging:staging@db:5432/youtube_ai_staging
       AUTO_MIGRATE: "false"
@@ -58,7 +58,7 @@ services:
     env_file: .env.staging
     environment:
       APP_ENV: staging
-      APP_VERSION: 4.2.1
+      APP_VERSION: 4.2.4
       DEPLOYMENT_ENV: staging
       DATABASE_URL: postgresql+asyncpg://staging:staging@db:5432/youtube_ai_staging
       AUTO_MIGRATE: "false"

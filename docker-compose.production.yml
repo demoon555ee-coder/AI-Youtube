@@ -16,14 +16,14 @@ services:
       start_period: 10s
 
   migrate:
-    image: ${API_IMAGE_REF:-ghcr.io/example/youtube-ai-platform-api:${RELEASE_TAG:-4.2.1}}
+    image: ${API_IMAGE_REF:-ghcr.io/example/youtube-ai-platform-api:${RELEASE_TAG:-4.2.4}}
     restart: "no"
     env_file: .env.production
     environment:
       APP_ENV: production
       AUTO_MIGRATE: "false"
       MIGRATION_ONLY: "true"
-      APP_VERSION: ${RELEASE_TAG:-4.2.1}
+      APP_VERSION: ${RELEASE_TAG:-4.2.4}
     command: ["python", "scripts/migrate.py"]
     depends_on:
       db:
@@ -32,12 +32,12 @@ services:
       - ./secrets:/app/secrets:ro
 
   api:
-    image: ${API_IMAGE_REF:-ghcr.io/example/youtube-ai-platform-api:${RELEASE_TAG:-4.2.1}}
+    image: ${API_IMAGE_REF:-ghcr.io/example/youtube-ai-platform-api:${RELEASE_TAG:-4.2.4}}
     restart: unless-stopped
     env_file: .env.production
     environment:
       APP_ENV: production
-      APP_VERSION: ${RELEASE_TAG:-4.2.1}
+      APP_VERSION: ${RELEASE_TAG:-4.2.4}
       AUTO_MIGRATE: "false"
       SCHEMA_GATE_ENABLED: "true"
       DEPLOYMENT_ENV: production
@@ -57,12 +57,12 @@ services:
       start_period: 15s
 
   worker:
-    image: ${API_IMAGE_REF:-ghcr.io/example/youtube-ai-platform-api:${RELEASE_TAG:-4.2.1}}
+    image: ${API_IMAGE_REF:-ghcr.io/example/youtube-ai-platform-api:${RELEASE_TAG:-4.2.4}}
     restart: unless-stopped
     env_file: .env.production
     environment:
       APP_ENV: production
-      APP_VERSION: ${RELEASE_TAG:-4.2.1}
+      APP_VERSION: ${RELEASE_TAG:-4.2.4}
       AUTO_MIGRATE: "false"
       DEPLOYMENT_ENV: production
     command: ["python", "-m", "app.workflows.worker"]
@@ -74,7 +74,7 @@ services:
       - ./secrets:/app/secrets:ro
 
   web:
-    image: ${WEB_IMAGE_REF:-ghcr.io/example/youtube-ai-platform-web:${RELEASE_TAG:-4.2.1}}
+    image: ${WEB_IMAGE_REF:-ghcr.io/example/youtube-ai-platform-web:${RELEASE_TAG:-4.2.4}}
     restart: unless-stopped
     environment:
       NODE_ENV: production

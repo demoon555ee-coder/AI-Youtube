@@ -32,5 +32,5 @@ def test_v26_provider_and_postgres_contract_files_exist():
 
 
 def test_current_compose_defaults_target_current_release():
-    assert "4.2.1" in (ROOT / "docker-compose.yml").read_text()
-    assert "4.2.1" in (ROOT / "docker-compose.production.yml").read_text()
+    assert "4.2.4" in (ROOT / "docker-compose.yml").read_text()
+    assert "4.2.4" in (ROOT / "docker-compose.production.yml").read_text()

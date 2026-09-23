@@ -29,7 +29,11 @@ export default function Dashboard() {
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to load dashboard"); }
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    void load();
+    const timer = window.setInterval(() => { void load(); }, 5000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const active = dashboard?.projects.find(p => !["PUBLISHED", "READY_TO_PUBLISH", "FAILED"].includes(p.status));
   const statusStep: Record<string, number> = { QUEUED: 0, RESEARCHING: 0, SCRIPTING: 1, STORYBOARDING: 2, DIRECTING_SCENES: 3, GENERATING_ASSETS: 4, EDITING: 5, GENERATING_THUMBNAIL: 6, QA: 6, READY_TO_PUBLISH: 7, PUBLISHED: 7, FAILED: 0 };

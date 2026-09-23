@@ -77,6 +77,25 @@ def secret_scan() -> list[str]:
     return sorted(set(hits))
 
 
+def _current_app_version() -> str:
+    cfg = (ROOT / 'app/config.py').read_text()
+    match = re.search(r'app_version: str = \"([^\"]+)\"', cfg)
+    if not match:
+        raise RuntimeError('app_version is not configured')
+    return match.group(1)
+
+
+def _current_release_defaults_match() -> bool:
+    version = _current_app_version()
+    checks = [
+        (ROOT / 'docker-compose.yml').read_text(),
+        (ROOT / 'docker-compose.staging.yml').read_text(),
+        (ROOT / 'docker-compose.production.yml').read_text(),
+        (ROOT / '.env.production.example').read_text(),
+    ]
+    return all(version in text and '3.8.0' not in text for text in checks[:2]) and version in checks[2] and version in checks[3] and 'prom/prometheus:v3.8.0' in checks[2]
+
+
 def deployment_audit() -> dict:
     compose = (ROOT / 'docker-compose.production.yml').read_text()
     docker = (ROOT / 'Dockerfile').read_text()
@@ -92,7 +111,7 @@ def deployment_audit() -> dict:
         'rollback_present': (ROOT / 'scripts/rollback.sh').exists(),
         'backup_present': (ROOT / 'scripts/backup_database.sh').exists(),
         'metrics_private_token': 'METRICS_PUBLIC=false' in (ROOT / '.env.production.example').read_text(),
-        'compose_release_defaults_current': all('4.2.1' in (ROOT / rel).read_text() and '3.8.0' not in (ROOT / rel).read_text() for rel in ['docker-compose.yml', 'docker-compose.staging.yml']) and ('4.2.1' in (ROOT / 'docker-compose.production.yml').read_text()) and ('prom/prometheus:v3.8.0' in (ROOT / 'docker-compose.production.yml').read_text()),
+        'compose_release_defaults_current': _current_release_defaults_match(),
         'staging_compose_present': (ROOT / 'docker-compose.staging.yml').exists(),
         'staging_migration_gate': 'service_completed_successfully' in (ROOT / 'docker-compose.staging.yml').read_text(),
         'frontend_api_build_arg': 'ARG NEXT_PUBLIC_API_BASE' in (ROOT / 'frontend/Dockerfile').read_text() and 'NEXT_PUBLIC_API_BASE' in (ROOT / 'docker-compose.staging.yml').read_text(),
@@ -113,7 +132,7 @@ def production_ai_audit() -> dict:
     orchestration = (ROOT / 'app/services/orchestrator.py').read_text()
     env = (ROOT / '.env.production.example').read_text()
     return {
-        'current_version_config': 'app_version: str = "4.2.1"' in cfg,
+        'current_version_config': bool(re.search(r'app_version: str = "[0-9]+\.[0-9]+\.[0-9]+"', cfg)),
         'image_provider_config': 'image_provider:' in cfg and 'image_model:' in cfg,
         'video_provider_config': 'video_provider:' in cfg and 'video_timeout_seconds:' in cfg,
         'tts_provider_config': 'tts_provider:' in cfg and 'tts_model:' in cfg,
