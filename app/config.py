@@ -24,6 +24,10 @@ class Settings(BaseSettings):
     upload_chunk_mb: int = 8
     analytics_lookback_days: int = 28
     output_dir: str = "./data/output"
+    render_engine: str = "ffmpeg"
+    remotion_node_bin: str = "node"
+    remotion_project_dir: str = "/app/app/remotion"
+    remotion_concurrency: int = 2
     workflow_poll_seconds: float = 1.0
     workflow_lease_seconds: int = 1800
     workflow_enabled: bool = True

@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import shutil
 from dataclasses import asdict
 from datetime import datetime
 from typing import Any, Iterable
@@ -33,7 +34,10 @@ DEFAULTS: dict[str, list[dict[str, Any]]] = {
         {"provider": "openai_tts", "kind": "openai_tts", "tier": "premium", "priority": 100, "unit": "minute", "unit_cost_usd": 0.0, "capabilities": {"voice": True}},
         {"provider": "elevenlabs", "kind": "elevenlabs", "tier": "premium", "priority": 110, "unit": "minute", "unit_cost_usd": 0.0, "capabilities": {"voice": True}},
     ],
-    "render": [{"provider": "ffmpeg", "kind": "ffmpeg", "tier": "economy", "priority": 10, "unit": "minute", "unit_cost_usd": 0.0, "capabilities": {"render": True}}],
+    "render": [
+        {"provider": "remotion", "kind": "remotion", "tier": "standard", "priority": 100, "unit": "minute", "unit_cost_usd": 0.0, "capabilities": {"render": True}},
+        {"provider": "ffmpeg", "kind": "ffmpeg", "tier": "economy", "priority": 10, "unit": "minute", "unit_cost_usd": 0.0, "capabilities": {"render": True}},
+    ],
     "image": [
         {"provider": "mock_png", "kind": "mock_png", "tier": "economy", "priority": 10, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True, "generative": True}},
         {"provider": "pexels_photo", "kind": "pexels_photo", "tier": "standard", "priority": 95, "unit": "image", "unit_cost_usd": 0.0, "capabilities": {"image": True, "stock": True}},
@@ -53,7 +57,7 @@ SETTINGS_PROVIDER = {
     "research": lambda: settings.research_provider,
     "visual": lambda: settings.visual_provider,
     "tts": lambda: settings.tts_provider,
-    "render": lambda: "ffmpeg",
+    "render": lambda: "remotion" if settings.render_engine in {"remotion", "auto"} else "ffmpeg",
     "image": lambda: settings.image_provider,
     "video": lambda: settings.video_provider,
 }
@@ -72,6 +76,8 @@ class ProviderRouter:
             return True
         if candidate.kind in {"mock_png", "mock_video", "espeak", "ffmpeg"}:
             return True
+        if candidate.kind == "remotion":
+            return bool(shutil.which(settings.remotion_node_bin) and os.path.isdir(settings.remotion_project_dir))
         cfg = candidate.config or {}
         if candidate.kind == "youtube_data":
             return bool(settings.youtube_research_api_key or os.getenv("YOUTUBE_RESEARCH_API_KEY", ""))

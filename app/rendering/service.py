@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from app.tts import get_tts
+from app.config import settings
 
 
 class RenderService:
@@ -17,6 +18,49 @@ class RenderService:
         self.tts = get_tts(tts_provider, tts_config)
 
     async def render_video(
+        self,
+        *,
+        project_id: str,
+        storyboard: dict[str, Any],
+        assets: list[dict[str, Any]] | None = None,
+        language: str = "en",
+        voice: str | None = None,
+    ) -> dict[str, Any]:
+        engine = str(settings.render_engine).strip().lower()
+        if engine in {"remotion", "auto"}:
+            try:
+                from app.rendering.remotion import RemotionRenderer
+
+                return await RemotionRenderer(self.output_dir, tts=self.tts).render_video(
+                    project_id=project_id,
+                    storyboard=storyboard,
+                    assets=assets,
+                    language=language,
+                    voice=voice,
+                )
+            except Exception as exc:
+                if engine == "remotion":
+                    raise
+                result = await self._render_video_ffmpeg(
+                    project_id=project_id,
+                    storyboard=storyboard,
+                    assets=assets,
+                    language=language,
+                    voice=voice,
+                )
+                result["render_engine"] = "ffmpeg"
+                result["render_fallback_reason"] = str(exc)[-2000:]
+                return result
+
+        return await self._render_video_ffmpeg(
+            project_id=project_id,
+            storyboard=storyboard,
+            assets=assets,
+            language=language,
+            voice=voice,
+        )
+
+    async def _render_video_ffmpeg(
         self,
         *,
         project_id: str,
