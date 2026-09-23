@@ -76,7 +76,8 @@ class RunwayVideoProvider(VisualAssetProvider):
                 lambda: client.post(f"{self.base_url}/image_to_video", json=payload, headers=headers),
                 max_retries=settings.llm_max_retries,
             )
-            response.raise_for_status()
+            if response.is_error:
+                raise RuntimeError(self._api_error(response))
             task = response.json()
 
             task_id = task.get("id")
@@ -95,7 +96,8 @@ class RunwayVideoProvider(VisualAssetProvider):
                     ),
                     max_retries=settings.llm_max_retries,
                 )
-                status_response.raise_for_status()
+                if status_response.is_error:
+                    raise RuntimeError(self._api_error(status_response))
                 task = status_response.json()
                 status = str(task.get("status") or "PENDING").upper()
 
@@ -130,6 +132,17 @@ class RunwayVideoProvider(VisualAssetProvider):
 
                 jitter = random.uniform(0.8, 1.2)
                 await asyncio.sleep(self.poll_seconds * jitter)
+
+    @staticmethod
+    def _api_error(response: httpx.Response) -> str:
+        try:
+            body = response.json()
+            detail = body.get("error") or body.get("message") or body.get("detail") or ""
+            if detail:
+                return f"Runway API request failed ({response.status_code}): {str(detail)[:500]}"
+        except ValueError:
+            pass
+        return f"Runway API request failed ({response.status_code})"
 
     @staticmethod
     def _image_data_uri(image_path: str) -> str:
