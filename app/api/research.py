@@ -28,7 +28,7 @@ async def run_research(
     except ValueError as exc:
         raise HTTPException(404, "Channel not found") from exc
     channel = await db.get(Channel, channel_uuid)
-    if not channel or channel.owner_id != principal.scope_key:
+    if not channel or ((channel.organization_id is not None and channel.organization_id != principal.organization_id) or (channel.organization_id is None and channel.owner_id != principal.scope_key)):
         raise HTTPException(404, "Channel not found")
     try:
         report = await ResearchService().run(
