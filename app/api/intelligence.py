@@ -1,7 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
+from app.auth.security import Principal, get_current_principal
 from app.db.session import get_db
+from app.models.auth import Channel
 from app.content.intelligence_service import build_for_idea, list_blueprints, serialize_blueprint
 from app.content.service import load_channel_memory
 
@@ -15,7 +18,14 @@ class BlueprintRequest(BaseModel):
 
 
 @router.get("/channels/{channel_id}/overview")
-async def intelligence_overview(channel_id: str, db: AsyncSession = Depends(get_db)):
+async def intelligence_overview(channel_id: str, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    try:
+        channel_uuid = UUID(channel_id)
+    except ValueError as exc:
+        raise HTTPException(404, "Channel not found") from exc
+    channel = await db.get(Channel, channel_uuid)
+    if not channel or channel.owner_id != principal.scope_key:
+        raise HTTPException(404, "Channel not found")
     memory = await load_channel_memory(db, channel_id)
     blueprints = await list_blueprints(db, channel_id=channel_id, limit=20)
     format_counts: dict[str, int] = {}
@@ -34,13 +44,27 @@ async def intelligence_overview(channel_id: str, db: AsyncSession = Depends(get_
 
 
 @router.get("/channels/{channel_id}/blueprints")
-async def intelligence_blueprints(channel_id: str, limit: int = 50, db: AsyncSession = Depends(get_db)):
+async def intelligence_blueprints(channel_id: str, limit: int = 50, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    try:
+        channel_uuid = UUID(channel_id)
+    except ValueError as exc:
+        raise HTTPException(404, "Channel not found") from exc
+    channel = await db.get(Channel, channel_uuid)
+    if not channel or channel.owner_id != principal.scope_key:
+        raise HTTPException(404, "Channel not found")
     rows = await list_blueprints(db, channel_id=channel_id, limit=limit)
     return {"channel_id": channel_id, "blueprints": [serialize_blueprint(x) for x in rows]}
 
 
 @router.post("/channels/{channel_id}/ideas/{idea_id}/blueprint")
-async def intelligence_blueprint(channel_id: str, idea_id: str, payload: BlueprintRequest, db: AsyncSession = Depends(get_db)):
+async def intelligence_blueprint(channel_id: str, idea_id: str, payload: BlueprintRequest, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
+    try:
+        channel_uuid = UUID(channel_id)
+    except ValueError as exc:
+        raise HTTPException(404, "Channel not found") from exc
+    channel = await db.get(Channel, channel_uuid)
+    if not channel or channel.owner_id != principal.scope_key:
+        raise HTTPException(404, "Channel not found")
     try:
         row = await build_for_idea(
             db,
