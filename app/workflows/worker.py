@@ -195,7 +195,7 @@ class ObservableWorkflowWorker(EngineWorkflowWorker):
                 if not run or run.status != 'RUNNING' or run.worker_id != self.worker_id:
                     return
                 run.lease_until = _utcnow() + timedelta(seconds=self.lease_seconds)
-                run.updated_at = datetime.utcnow()
+                run.updated_at = _utcnow()
                 await db.commit()
             await self.heartbeat(status='RUNNING', active_workflow_id=workflow_id)
 
