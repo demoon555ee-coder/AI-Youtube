@@ -103,3 +103,45 @@ def test_runway_output_url_guard_rejects_untrusted_host():
     except ValueError:
         return
     raise AssertionError("Untrusted Runway output host was accepted")
+
+    
+def test_asset_factory_seeds_runway_with_an_image(monkeypatch, tmp_path):
+    from app.media.service import AssetFactory
+
+    class FakeImage:
+        name = "mock_png"
+        async def generate_scene_asset(self, *, prompt, output_path, **kwargs):
+            path = Path(output_path)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"PNG")
+            return {"provider": self.name, "path": str(path)}
+
+    class FakeRunway:
+        name = "runway"
+        def __init__(self):
+            self.image_path = None
+        async def generate_scene_asset(self, *, prompt, output_path, metadata, **kwargs):
+            self.image_path = metadata.get("image_path")
+            path = Path(output_path)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"MP4")
+            return {"provider": self.name, "path": str(path), "status": "completed"}
+
+    fake_image = FakeImage()
+    fake_runway = FakeRunway()
+    monkeypatch.setattr("app.media.service.get_image_provider", lambda *_args, **_kwargs: fake_image)
+    monkeypatch.setattr("app.media.service.get_video_provider", lambda *_args, **_kwargs: fake_runway)
+
+    result = asyncio.run(AssetFactory(
+        str(tmp_path), image_provider="mock_png", video_provider="runway"
+    ).build_for_storyboard(
+        project_id="runway-seed",
+        storyboard={"scenes": [
+            {"scene": 1, "duration": 2, "asset_type": "video", "visual_prompt": "city sunrise"},
+        ]},
+    ))
+
+    assert Path(fake_runway.image_path).exists()
+    assert Path(fake_runway.image_path).name == "seed_scene_001.png"
+    assert result["assets"][0]["source"] == "runway"
+    assert result["assets"][0]["path"].endswith("scene_001.mp4")
