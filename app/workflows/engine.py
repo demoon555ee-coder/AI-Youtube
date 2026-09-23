@@ -4,7 +4,7 @@ import asyncio
 import contextlib
 import socket
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import AsyncIterator
 
 from sqlalchemy import or_, select
@@ -28,7 +28,7 @@ ACTIVE_STATUSES = {"QUEUED", "RUNNING"}
 
 
 def utcnow() -> datetime:
-    return datetime.utcnow()
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 class WorkflowEngine:
