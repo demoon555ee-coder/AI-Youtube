@@ -123,6 +123,11 @@ function ChannelOnboardingContent() {
         <strong>Create a new workspace</strong>
         <span className="mini">A separate AI operating workspace for a channel</span>
       </button>
+      <a className="channelCreateCard" href="https://www.youtube.com/channel_switcher" target="_blank" rel="noreferrer">
+        <span className="channelCreatePlus">↗</span>
+        <strong>Create a new YouTube channel</strong>
+        <span className="mini">Open YouTube and create the channel, then connect it here</span>
+      </a>
     </section>
     <section className="channelSetupActions">
       <div className="channelSetupSecondary">
