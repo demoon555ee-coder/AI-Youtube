@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from app.auth.security import Principal, get_current_principal
 from app.db.session import get_db
-from app.models.auth import Channel
+from app.models import Channel
 from app.content.intelligence_service import build_for_idea, list_blueprints, serialize_blueprint
 from app.content.service import load_channel_memory
 
