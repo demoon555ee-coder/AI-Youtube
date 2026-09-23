@@ -179,7 +179,7 @@ def test_v30_production_validator_accepts_runway_and_elevenlabs(monkeypatch, tmp
         "elevenlabs_api_key": "key",
         "elevenlabs_voice_id": "voice",
     }
-    for key, value of Object.entries(values):
+    for key, value in values.items():
         monkeypatch.setattr(runtime_settings, key, value)
 
     codes = {item.code for item in validate_production_settings()}
