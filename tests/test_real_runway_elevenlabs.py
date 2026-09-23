@@ -145,3 +145,22 @@ def test_asset_factory_seeds_runway_with_an_image(monkeypatch, tmp_path):
     assert Path(fake_runway.image_path).name == "seed_scene_001.png"
     assert result["assets"][0]["source"] == "runway"
     assert result["assets"][0]["path"].endswith("scene_001.mp4")
+
+    
+def test_runway_provider_exposes_safe_api_error(monkeypatch, tmp_path):
+    fake = _FakeClient([
+        _resp(400, {"error": "You do not have enough credits to run this task."}),
+    ])
+    monkeypatch.setattr("app.media.runway_video.httpx.AsyncClient", lambda **_: fake)
+    provider = RunwayVideoProvider(api_key="k", poll_seconds=5, timeout_seconds=30)
+
+    try:
+        asyncio.run(provider.generate_scene_asset(
+            prompt="test",
+            output_path=str(tmp_path / "clip.mp4"),
+            metadata={},
+        ))
+    except RuntimeError as exc:
+        assert "not enough credits" in str(exc)
+        return
+    raise AssertionError("Runway API error was not surfaced")
