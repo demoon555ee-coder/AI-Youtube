@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Shell from "../../../components/Shell";
+import Shell from "../../components/Shell";
 import { apiGet, apiPost, apiPatch, getStoredChannelId, storeChannelId } from "@/lib/api";
 
 type Channel = { id: string; name: string };
