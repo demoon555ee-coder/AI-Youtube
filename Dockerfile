@@ -19,11 +19,13 @@ COPY app ./app
 COPY scripts ./scripts
 RUN cd /app/app/remotion \
     && npm install --omit=dev --no-audit --no-fund \
-    && npx remotion browser ensure \
     && mkdir -p /app/data/output /app/secrets \
     && chown -R app:app /app
 
 USER app
+
+RUN cd /app/app/remotion \
+    && npx remotion browser ensure
 EXPOSE 8000
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=20s --retries=12 \
