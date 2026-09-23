@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
-from app.auth.security import Principal, get_current_principal
+from app.auth.security import Principal, permission_dependency
 from app.db.session import get_db
 from app.models import Channel
 from app.research.service import ResearchService
@@ -21,7 +21,7 @@ async def run_research(
     channel_id: str,
     payload: ResearchRequest,
     db: AsyncSession = Depends(get_db),
-    principal: Principal = Depends(get_current_principal),
+    principal: Principal = Depends(permission_dependency("research:write")),
 ):
     try:
         channel_uuid = UUID(channel_id)
