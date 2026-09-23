@@ -53,3 +53,16 @@ def test_generation_routing_cannot_select_stock_provider():
     assert '("production", "visual", 5, {"image", "generative"})' in router
     assert '("production_video", "video", 5, {"video", "generative"})' in router
     assert '("thumbnail", "image", 1, {"image", "generative"})' in router
+
+
+
+def test_routing_runtime_availability_is_redacted_and_visible_in_ui():
+    api = (ROOT / "app/api/routing.py").read_text()
+    page = (ROOT / "frontend/app/routing/page.tsx").read_text()
+    start = api.index('@router.get("/runtime-availability")')
+    end = api.index('@router.get("/decisions")', start)
+    block = api[start:end]
+    assert '"runtime_available": candidate.runtime_available' in block
+    assert '"api_key"' not in block
+    assert '"/api/v1/routing/runtime-availability"' in page
+    assert "Runtime availability" in page
