@@ -1,4 +1,4 @@
-from app.services import youtube_client
+﻿from app.services import youtube_client
 
 
 def test_get_mine_channels_paginates_all_pages(monkeypatch):
@@ -35,10 +35,10 @@ def test_get_mine_channels_paginates_all_pages(monkeypatch):
     assert calls == [None, "page-2"]
 
 
-def test_get_mine_channels_raises_when_all_pages_are_empty(monkeypatch):
+def test_get_mine_channels_returns_empty_when_all_pages_are_empty(monkeypatch):
     class Request:
         def execute(self):
-            return {"items": [], "nextPageToken": None}
+            return {'items': [], 'nextPageToken': None}
 
     class Channels:
         def list(self, **kwargs):
@@ -48,11 +48,6 @@ def test_get_mine_channels_raises_when_all_pages_are_empty(monkeypatch):
         def channels(self):
             return Channels()
 
-    monkeypatch.setattr(youtube_client, "youtube_data_api", lambda credentials: Api())
+    monkeypatch.setattr(youtube_client, 'youtube_data_api', lambda credentials: Api())
 
-    try:
-        youtube_client.get_mine_channels(object())
-    except RuntimeError as exc:
-        assert str(exc) == "No YouTube channel found for authenticated account"
-    else:
-        raise AssertionError("Expected RuntimeError for an account without channels")
+    assert youtube_client.get_mine_channels(object()) == []
