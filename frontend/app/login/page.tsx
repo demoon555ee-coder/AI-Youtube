@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiPost } from "../../lib/api";
+import { LanguageSwitcher, LocalizedContent } from "../../components/Locale";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,7 +45,7 @@ export default function LoginPage() {
     }
   }
 
-  return <main className="welcomeAuthPage">
+  return <><LanguageSwitcher className="pageLanguage" /><LocalizedContent><main className="welcomeAuthPage">
     <section className="welcomeVisual" aria-label="YouTube AI workspace">
       <div className="visualNoise" />
       <div className="visualOrb orbOne" />
@@ -92,5 +93,5 @@ export default function LoginPage() {
         <div className="authNote">Google opens the account chooser. After authorization, your available YouTube channels are loaded automatically.</div>
       </div>
     </section>
-  </main>;
+  </main></LocalizedContent></>;
 }

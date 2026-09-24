@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 from json import JSONDecodeError
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from google.auth.transport.requests import Request
 from google.oauth2 import id_token
@@ -12,8 +14,8 @@ from app.config import settings
 
 GOOGLE_AUTH_SCOPES = [
     "openid",
-    "email",
-    "profile",
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/userinfo.profile",
     "https://www.googleapis.com/auth/youtube.upload",
     "https://www.googleapis.com/auth/youtube.readonly",
     "https://www.googleapis.com/auth/yt-analytics.readonly",
@@ -42,6 +44,16 @@ def _client_config() -> dict:
 
 
 def build_flow(state: str | None = None) -> Flow:
+    redirect = urlsplit(settings.google_auth_redirect_uri)
+    local_http = redirect.scheme == "http" and redirect.hostname in {"localhost", "127.0.0.1", "::1"}
+    if local_http:
+        if settings.app_env.strip().lower() not in {"development", "dev", "local", "test"}:
+            raise RuntimeError("HTTP Google OAuth callbacks are allowed only for localhost development")
+        # OAuthlib rejects HTTP redirects by default. Permit it only for the
+        # configured loopback callback used by local development.
+        os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+    elif settings.app_env.strip().lower() in {"production", "prod", "staging", "stage"} and os.environ.get("OAUTHLIB_INSECURE_TRANSPORT"):
+        raise RuntimeError("OAUTHLIB_INSECURE_TRANSPORT must not be enabled outside localhost development")
     flow = Flow.from_client_config(_client_config(), scopes=GOOGLE_AUTH_SCOPES, state=state)
     flow.redirect_uri = settings.google_auth_redirect_uri
     return flow

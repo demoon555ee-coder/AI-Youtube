@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+﻿from datetime import datetime, timezone
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google.oauth2.credentials import Credentials
@@ -105,3 +105,4 @@ def query_analytics(credentials: Credentials, channel_id: str, start_date: str, 
         params["filters"] = filters
 
     return youtube_analytics_api(credentials).reports().query(**params).execute()
+

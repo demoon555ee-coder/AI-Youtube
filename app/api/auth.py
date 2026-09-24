@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 import secrets
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse
@@ -23,6 +24,7 @@ from app.models.channel import Channel
 from app.models.youtube_connection import YouTubeConnection
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
+logger = logging.getLogger(__name__)
 
 
 def _user_payload(user: User) -> dict:
@@ -80,7 +82,16 @@ async def google_callback(request: Request, response: Response, db: AsyncSession
         session, raw_token, csrf_token = await create_session(db, user.id, settings.auth_session_ttl_days)
 
         from app.services.youtube_client import get_mine_channels
-        channels = get_mine_channels(creds)
+        channel_sync_failed = False
+        try:
+            channels = get_mine_channels(creds)
+        except Exception as exc:
+            # Google identity authentication and the app session must not depend
+            # on the optional YouTube Data API being available during callback.
+            # Log only the exception type; provider errors may contain secrets.
+            logger.warning("Google login succeeded but YouTube channel sync failed (%s)", type(exc).__name__)
+            channels = []
+            channel_sync_failed = True
         expiry = creds.expiry.replace(tzinfo=None) if creds.expiry else None
         encrypted_access = encrypt(creds.token or "")
         encrypted_refresh = encrypt(creds.refresh_token) if creds.refresh_token else ""
@@ -112,13 +123,15 @@ async def google_callback(request: Request, response: Response, db: AsyncSession
         await db.delete(oauth_state)
         await write_audit(db, request, Principal(user.id, organization_id, membership.role, "session", session.id, str(organization_id), frozenset({"*"})), action="auth.google_login", resource_type="user", resource_id=str(user.id), metadata={"channel_count": len(linked)})
         await db.commit()
-        response = RedirectResponse(url=f"{settings.frontend_url.rstrip('/')}/onboarding/channels?google=connected", status_code=303)
+        channel_status = "unavailable" if channel_sync_failed else ("none" if not linked else "connected")
+        response = RedirectResponse(url=f"{settings.frontend_url.rstrip('/')}/onboarding/channels?google=connected&channels={channel_status}", status_code=303)
         response.set_cookie(key=settings.auth_cookie_name, value=raw_token, max_age=settings.auth_session_ttl_days * 86400, httponly=True, secure=settings.app_env == "production", samesite="lax", path="/")
         response.headers["X-Auth-Channel-Count"] = str(len(linked))
         return response
     except HTTPException:
         raise
     except Exception as exc:
+        logger.error("Google OAuth callback failed (%s)", type(exc).__name__)
         await db.rollback()
         redirect = f"{settings.frontend_url.rstrip('/')}/login?google=error"
         return RedirectResponse(url=redirect, status_code=303)
