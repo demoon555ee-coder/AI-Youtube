@@ -18,6 +18,26 @@ from decimal import Decimal
 router = APIRouter(prefix="/api/v1/youtube", tags=["youtube"])
 
 
+async def _get_owned_channel(db: AsyncSession, channel_id: str, principal: Principal) -> Channel:
+    try:
+        cid = UUID(channel_id)
+    except (ValueError, TypeError) as exc:
+        raise HTTPException(status_code=404, detail="Channel not found") from exc
+
+    channel = await db.get(Channel, cid)
+    if not channel:
+        raise HTTPException(status_code=404, detail="Channel not found")
+    belongs_to_principal = (
+        channel.organization_id == principal.organization_id
+        if channel.organization_id is not None
+        else channel.owner_id == principal.scope_key
+    )
+    if not belongs_to_principal:
+        # Keep foreign resource IDs indistinguishable from missing resources.
+        raise HTTPException(status_code=404, detail="Channel not found")
+    return channel
+
+
 @router.post("/oauth/start")
 async def oauth_start(payload: YouTubeOAuthStart, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     try:
@@ -43,7 +63,10 @@ async def oauth_callback(request: Request, db: AsyncSession = Depends(get_db)):
 @router.get("/channels/{channel_id}/status")
 async def youtube_status(channel_id: str, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     try:
-        return await connection_status(db, channel_id)
+        channel = await _get_owned_channel(db, channel_id, principal)
+        return await connection_status(db, str(channel.id))
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=404, detail=str(exc))
 
@@ -55,19 +78,8 @@ async def youtube_disconnect(
     db: AsyncSession = Depends(get_db),
     principal: Principal = Depends(require_roles({"owner", "admin"})),
 ):
-    try:
-        cid = UUID(channel_id)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid channel id") from exc
-
-    channel = await db.get(Channel, cid)
-    if not channel:
-        raise HTTPException(status_code=404, detail="Channel not found")
-    if channel.organization_id is not None:
-        if channel.organization_id != principal.organization_id:
-            raise HTTPException(status_code=403, detail="Channel access denied")
-    elif channel.owner_id != principal.scope_key:
-        raise HTTPException(status_code=403, detail="Channel access denied")
+    channel = await _get_owned_channel(db, channel_id, principal)
+    cid = channel.id
 
     connection = await db.scalar(select(YouTubeConnection).where(YouTubeConnection.channel_id == cid))
     if connection:
@@ -95,9 +107,9 @@ async def youtube_disconnect(
 async def youtube_publish(channel_id: str, payload: PublishRequest, db: AsyncSession = Depends(get_db), principal: Principal = Depends(require_roles({"owner", "admin"}))):
     # Manual publishing is an intent, not a privileged shortcut. The task is admitted
     # by Governance and executed later by the leased Publisher Agent.
-    channel = await db.get(Channel, channel_id)
+    channel = await _get_owned_channel(db, channel_id, principal)
     project = await db.get(VideoProject, payload.project_id)
-    if not channel or not project or project.channel_id != channel.id:
+    if not project or project.channel_id != channel.id:
         raise HTTPException(status_code=404, detail="Channel or project not found")
     try:
         task = await AgentRuntimeService(db).create_task(
@@ -127,6 +139,9 @@ async def youtube_publish(channel_id: str, payload: PublishRequest, db: AsyncSes
 @router.post("/channels/{channel_id}/analytics")
 async def youtube_analytics(channel_id: str, payload: AnalyticsRequest, db: AsyncSession = Depends(get_db), principal: Principal = Depends(get_current_principal)):
     try:
-        return await analytics(db, channel_id, payload)
+        channel = await _get_owned_channel(db, channel_id, principal)
+        return await analytics(db, str(channel.id), payload)
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc))

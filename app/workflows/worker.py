@@ -167,6 +167,13 @@ class ObservableWorkflowWorker(EngineWorkflowWorker):
                         await db.commit()
                         from app.services.autopilot_publisher import auto_publish_if_due
                         await auto_publish_if_due(db, workflow.project_id)
+                        from app.execution.controller import AutonomousExecutionController
+                        await AutonomousExecutionController(db).reconcile_workflow(
+                            workflow.id,
+                            success=True,
+                            result={"project_status": "READY_TO_PUBLISH"},
+                        )
+                        await db.commit()
                     await self._finish(workflow.id, 'COMPLETED', None)
                     metrics.inc('workflow_runs_completed_total', labels={'status': 'COMPLETED'})
                 except Exception as exc:
@@ -176,6 +183,14 @@ class ObservableWorkflowWorker(EngineWorkflowWorker):
                     if current and current.status == 'CANCELLED':
                         await self.heartbeat(status='IDLE')
                         return True
+                    async with self.session_factory() as db:
+                        from app.execution.controller import AutonomousExecutionController
+                        await AutonomousExecutionController(db).reconcile_workflow(
+                            workflow.id,
+                            success=False,
+                            result={"error": str(exc)},
+                        )
+                        await db.commit()
                     await self._finish(workflow.id, 'FAILED', str(exc))
         finally:
             duration = asyncio.get_running_loop().time() - started
