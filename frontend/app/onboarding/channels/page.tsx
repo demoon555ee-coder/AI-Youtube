@@ -140,7 +140,7 @@ function ChannelOnboardingContent() {
         <button className="btn" disabled={busy} onClick={() => void connectAnotherGoogleAccount()}>Change Google account</button>
         <span className="mini">The Google account chooser opens again, then we reload that account's YouTube channels.</span>
       </div>
-      <button className="btn primary" disabled={!selected || busy} onClick={continueToStudio}>Continue to Dashboard -></button>
+      <button className="btn primary" disabled={!selected || busy} onClick={continueToStudio}>Continue to Dashboard</button>
     </section>
 
     {showCreateYouTube && <div className="modalBackdrop" onClick={() => setShowCreateYouTube(false)}>

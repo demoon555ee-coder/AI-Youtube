@@ -83,7 +83,7 @@ export default function Dashboard() {
   return <Shell>
     <div className="topbar">
       <div><div className="kicker">Channel overview</div><h1>{dashboard?.channel.name || "AI Lab"}</h1><p className="sub">{dashboard?.channel.niche || "Autonomous YouTube content operating system"}</p></div>
-      <div className="actions">{channels.length > 1 && <select className="select" style={{width:210}} value={selectedChannelId || ""} onChange={e => { const id = e.target.value; storeChannelId(id); setSelectedChannelId(id); void load(id); }}>{channels.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>}<Link className="btn" href="/settings">Connect channel</Link><Link className="btn" href="/autopilot">Open Autopilot</Link><Link className="btn primary" href="/ideas">Open Content Factory</Link></div>
+      <div className="actions">{channels.length > 1 && <select className="select" style={{width:210}} value={selectedChannelId || ""} onChange={e => { const id = e.target.value; storeChannelId(id, false); setSelectedChannelId(id); void load(id); }}>{channels.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>}<Link className="btn" href="/settings">Connect channel</Link><Link className="btn" href="/autopilot">Open Autopilot</Link><Link className="btn primary" href="/ideas">Open Content Factory</Link></div>
     </div>
 
     {error && <div className="error" style={{marginBottom:16}}>{error}</div>}
@@ -108,7 +108,7 @@ export default function Dashboard() {
       <div className="pinBoard">
         <article className="pinCard">
           <div className="pinMedia persimmon"><strong style={{fontSize:24,letterSpacing:"-.03em"}}>Build the next video.</strong></div>
-          <div className="pinBody"><strong>Content Factory</strong><p>Turn a research-backed idea into a governed production workflow.</p><div style={{marginTop:12}}><Link href="/ideas" className="btn primary">Start from idea -></Link></div></div>
+          <div className="pinBody"><strong>Content Factory</strong><p>Turn a research-backed idea into a governed production workflow.</p><div style={{marginTop:12}}><Link href="/ideas" className="btn primary">Start from idea</Link></div></div>
         </article>
         <article className="pinCard">
           <div className="pinMedia blue"><strong style={{fontSize:24,letterSpacing:"-.03em"}}>{active?.status || "No active run"}</strong></div>
@@ -124,7 +124,7 @@ export default function Dashboard() {
         </article>
         <article className="pinCard">
           <div className="pinMedia plum"><strong style={{fontSize:22,letterSpacing:"-.03em"}}>Channel Brain</strong></div>
-          <div className="pinBody"><strong>Learning loop</strong><p>Analytics -> diagnosis -> memory -> next idea, while governance remains in control.</p><div style={{marginTop:12}}><Link href="/brain" className="btn">Open brain</Link></div></div>
+          <div className="pinBody"><strong>Learning loop</strong><p>Analytics, diagnosis, memory, next idea, while governance remains in control.</p><div style={{marginTop:12}}><Link href="/brain" className="btn">Open brain</Link></div></div>
         </article>
         <article className="pinCard">
           <div className="pinMedia blue"><strong style={{fontSize:22,letterSpacing:"-.03em"}}>Media stack</strong></div>

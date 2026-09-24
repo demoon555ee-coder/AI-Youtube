@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { apiGet, apiPost, getStoredChannelId, storeChannelId } from "../lib/api";
+import { apiGet, apiPost, getStoredChannelId, storeChannelId, subscribeToChannelChanges } from "../lib/api";
 import { LanguageSwitcher, LocalizedContent, useLocale } from "./Locale";
 
 const links = [
@@ -43,13 +43,25 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const [activeChannel, setActiveChannel] = useState<ShellChannel | null>(null);
 
   useEffect(() => {
-    void apiGet<{ channels: ShellChannel[] }>("/api/v1/channels").then(result => {
-      setChannels(result.channels);
-      const stored = getStoredChannelId();
-      const chosen = result.channels.find(channel => channel.id === stored) || result.channels[0] || null;
-      setActiveChannel(chosen);
-      if (chosen) storeChannelId(chosen.id);
-    }).catch(() => undefined);
+    let cancelled = false;
+    async function loadChannels(preferredId?: string) {
+      try {
+        const result = await apiGet<{ channels: ShellChannel[] }>("/api/v1/channels");
+        if (cancelled) return;
+        setChannels(result.channels);
+        const stored = preferredId || getStoredChannelId();
+        const chosen = result.channels.find(channel => channel.id === stored) || result.channels[0] || null;
+        setActiveChannel(chosen);
+        if (chosen && chosen.id !== stored) storeChannelId(chosen.id);
+      } catch {
+        if (!cancelled) setActiveChannel(null);
+      }
+    }
+    void loadChannels();
+    const unsubscribe = subscribeToChannelChanges((channelId) => {
+      void loadChannels(channelId);
+    });
+    return () => { cancelled = true; unsubscribe(); };
   }, [pathname]);
 
   async function logout(){ try { await apiPost("/api/v1/auth/logout"); } finally { window.localStorage.removeItem("youtube_ai_channel_id"); router.push("/login"); } }
@@ -80,7 +92,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           <button className="btn" style={{marginTop:10,width:"100%"}} onClick={()=>void logout()}>{t("Sign out")}</button>
         </div>
       </aside>
-      <main className="main"><LocalizedContent>{children}</LocalizedContent></main>
+      <main key={activeChannel?.id || "no-channel"} className="main"><LocalizedContent>{children}</LocalizedContent></main>
     </div>
   );
 }
