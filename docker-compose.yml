@@ -15,16 +15,30 @@ services:
       timeout: 5s
       retries: 12
 
+  migrate:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://youtube_ai:youtube_ai@db:5432/youtube_ai
+      AUTO_MIGRATE: "false"
+      MIGRATION_ONLY: "true"
+      MIGRATION_BOOTSTRAP_BASE_SCHEMA: "true"
+    command: ["python", "scripts/migrate.py"]
+    depends_on:
+      db:
+        condition: service_healthy
+
   api:
     build: .
     env_file: .env
     environment:
+      AUTO_MIGRATE: "false"
       WORKFLOW_ENABLED: "false"
       APP_VERSION: "4.2.4"
       DATABASE_URL: postgresql+asyncpg://youtube_ai:youtube_ai@db:5432/youtube_ai
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports:
       - "8000:8000"
     volumes:
@@ -40,6 +54,7 @@ services:
     build: .
     env_file: .env
     environment:
+      AUTO_MIGRATE: "false"
       WORKFLOW_ENABLED: "true"
       APP_VERSION: "4.2.4"
       DATABASE_URL: postgresql+asyncpg://youtube_ai:youtube_ai@db:5432/youtube_ai
@@ -47,8 +62,8 @@ services:
     healthcheck:
       disable: true
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     volumes:
       - ./data:/app/data
       - ./secrets:/app/secrets:ro

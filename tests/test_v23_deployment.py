@@ -40,6 +40,27 @@ def test_staging_migration_bootstraps_base_schema_explicitly():
     assert "CREATE ROLE anon" in script
     assert "CREATE ROLE authenticated" in script
 
+def test_local_compose_runs_one_bootstrap_migration_before_api_and_worker():
+    data = yaml.safe_load((ROOT / "docker-compose.yml").read_text())
+    services = data["services"]
+
+    migrate = services["migrate"]
+    assert migrate["command"] == ["python", "scripts/migrate.py"]
+    assert migrate["environment"]["MIGRATION_ONLY"] == "true"
+    assert migrate["environment"]["MIGRATION_BOOTSTRAP_BASE_SCHEMA"] == "true"
+    assert services["api"]["depends_on"]["migrate"]["condition"] == "service_completed_successfully"
+    assert services["worker"]["depends_on"]["migrate"]["condition"] == "service_completed_successfully"
+    assert services["api"]["environment"]["AUTO_MIGRATE"] == "false"
+    assert services["worker"]["environment"]["AUTO_MIGRATE"] == "false"
+
+
+def test_api_openapi_schema_builds():
+    from app.main import app
+
+    schema = app.openapi()
+    assert schema["openapi"]
+    assert "/api/v1/privacy/requests/{request_id}/cancel" in schema["paths"]
+
 def test_staging_media_uses_shared_named_volume():
     data = yaml.safe_load((ROOT / "docker-compose.staging.yml").read_text())
     for service in ("api", "worker"):
