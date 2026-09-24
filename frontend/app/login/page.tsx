@@ -44,33 +44,53 @@ export default function LoginPage() {
     }
   }
 
-  return <main className="authPage">
-    <div className="authCard">
-      <div className="authBrand"><span className="authBrandMark">●</span><span>YouTube AI</span></div>
-      <div className="kicker">Creator workspace</div>
-      <h1>{mode === "login" ? "Welcome back" : "Create your studio"}</h1>
-      <p className="sub">Connect Google once, then choose the YouTube channel you want the AI team to operate.</p>
-      {error && <div className="error" style={{ marginTop: 16 }}>{error}</div>}
+  return <main className="welcomeAuthPage">
+    <section className="welcomeVisual" aria-label="YouTube AI workspace">
+      <div className="visualNoise" />
+      <div className="visualOrb orbOne" />
+      <div className="visualOrb orbTwo" />
+      <div className="visualOrbit orbitOne" />
+      <div className="visualOrbit orbitTwo" />
+      <div className="visualGrid" />
+      <div className="welcomeVisualCopy">
+        <div className="authBrand visualBrand"><span className="authBrandMark">●</span><span>YouTube AI</span></div>
+        <div className="kicker visualKicker">Autonomous creator operating system</div>
+        <h1>From idea to published video.</h1>
+        <p>Research. Create. Produce. Publish. Learn. One governed workspace for every YouTube channel.</p>
+        <div className="visualFlow">
+          {["Research","Script","Production","Publish","Learn"].map((step, index) => <span key={step} className="flowStep"><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}
+        </div>
+      </div>
+    </section>
 
-      <button className="googleBtn" disabled={busy} onClick={() => void signInWithGoogle()}>
-        <span className="googleIcon">G</span>
-        <span>{busy ? "Connecting…" : "Continue with Google"}</span>
-      </button>
+    <section className="welcomeAuthPane">
+      <div className="authCard">
+        <div className="authBrand mobileBrand"><span className="authBrandMark">●</span><span>YouTube AI</span></div>
+        <div className="kicker">Welcome</div>
+        <h1>{mode === "login" ? "Start your studio" : "Create your studio"}</h1>
+        <p className="sub">Sign in with Google and we will load the YouTube channels available to your account. Then you choose which channel to work with.</p>
+        {error && <div className="error" style={{ marginTop: 16 }}>{error}</div>}
 
-      <div className="authDivider"><span>or</span></div>
+        <button className="googleBtn" disabled={busy} onClick={() => void signInWithGoogle()}>
+          <span className="googleIcon">G</span>
+          <span>{busy ? "Connecting…" : "Continue with Google"}</span>
+        </button>
 
-      <form onSubmit={(e) => void submit(e)} className="stack">
-        {mode === "register" && <div className="field"><label htmlFor="auth-name">Name</label><input id="auth-name" className="input" autoComplete="name" value={name} onChange={e => setName(e.target.value)} /></div>}
-        <div className="field"><label htmlFor="auth-email">Email</label><input id="auth-email" className="input" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} /></div>
-        <div className="field"><label htmlFor="auth-password">Password</label><input id="auth-password" className="input" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={12} required value={password} onChange={e => setPassword(e.target.value)} /></div>
-        {mode === "register" && <div className="field"><label htmlFor="auth-organization">Workspace name</label><input id="auth-organization" className="input" value={organizationName} onChange={e => setOrganizationName(e.target.value)} /></div>}
-        <button className="btn primary" disabled={busy}>{mode === "login" ? "Sign in with email" : "Create account"}</button>
-      </form>
+        <div className="authDivider"><span>or</span></div>
 
-      <button className="authSwitch" onClick={() => setMode(mode === "login" ? "register" : "login")}>
-        {mode === "login" ? "Create a new account" : "I already have an account"}
-      </button>
-      <div className="authNote">Google OAuth uses the account chooser, so a user can select another Google account without signing out of the browser.</div>
-    </div>
+        <form onSubmit={(e) => void submit(e)} className="stack">
+          {mode === "register" && <div className="field"><label htmlFor="auth-name">Name</label><input id="auth-name" className="input" autoComplete="name" value={name} onChange={e => setName(e.target.value)} /></div>}
+          <div className="field"><label htmlFor="auth-email">Email</label><input id="auth-email" className="input" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} /></div>
+          <div className="field"><label htmlFor="auth-password">Password</label><input id="auth-password" className="input" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={12} required value={password} onChange={e => setPassword(e.target.value)} /></div>
+          {mode === "register" && <div className="field"><label htmlFor="auth-organization">Workspace name</label><input id="auth-organization" className="input" value={organizationName} onChange={e => setOrganizationName(e.target.value)} /></div>}
+          <button className="btn primary" disabled={busy}>{mode === "login" ? "Sign in with email" : "Create account"}</button>
+        </form>
+
+        <button className="authSwitch" onClick={() => setMode(mode === "login" ? "register" : "login")}>
+          {mode === "login" ? "Create a new account" : "I already have an account"}
+        </button>
+        <div className="authNote">Google opens the account chooser. After authorization, your available YouTube channels are loaded automatically.</div>
+      </div>
+    </section>
   </main>;
 }
