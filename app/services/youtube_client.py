@@ -1,4 +1,4 @@
-﻿from datetime import datetime, timezone
+from datetime import datetime, timezone
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 from google.oauth2.credentials import Credentials
@@ -34,8 +34,6 @@ def get_mine_channels(credentials: Credentials) -> list[dict]:
         if not page_token:
             break
 
-    if not items:
-        raise RuntimeError("No YouTube channel found for authenticated account")
     return items
 
 
