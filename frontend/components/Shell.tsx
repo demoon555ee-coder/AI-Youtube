@@ -52,7 +52,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     }).catch(() => undefined);
   }, [pathname]);
 
-  async function logout(){ try { await apiPost("/api/v1/auth/logout"); } finally { router.push("/login"); } }
+  async function logout(){ try { await apiPost("/api/v1/auth/logout"); } finally { window.localStorage.removeItem("youtube_ai_channel_id"); router.push("/login"); } }
 
   return (
     <div className="shell">
