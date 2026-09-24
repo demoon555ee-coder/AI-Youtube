@@ -49,7 +49,7 @@ Next.js UI (frontend/app, frontend/components, frontend/lib/api.ts)
 | Research/analytics learning loop | PARTIAL | `app/research`, `app/brain`, `app/postpublish`, `app/learning`, `app/evolution` | многочисленные unit/contract tests | Сервисы и таблицы для research, analytics snapshots, monitoring и bounded learning существуют. Внешние реальные данные и весь цикл до следующего видео не проверены end-to-end. |
 | Governance/approvals/emergency stop | REAL architecture / runtime unverified | `app/governance`, `app/api/governance.py`, `app/runtime`, `app/execution` | governance/runtime tests | Централизованная admission, риск, approval, kill switch и lease-based tasks существуют. Production-политики/живое выполнение не проверялись. |
 | Durable content workflow | PARTIAL integration | `app/workflows`, `app/services/orchestrator.py`, `app/agents` | workflow tests; E2E source | Durable workflow и retry/checkpoint контракты реализованы; отдельный agent control plane пока не управляет всем production renderer pipeline (см. README). |
-| Local PostgreSQL migration gate | VERIFIED on existing DB; fresh-volume unverified | `docker-compose.yml`, `scripts/migrate.py` | compose contract test + successful compose startup | Мигратор завершился с кодом 0 до API/worker; DB readiness подтверждает 36/36 migration versions. Чистая БД отдельно не создавалась. |
+| Local PostgreSQL migration gate | VERIFIED on existing dev DB and fresh staging DB | `docker-compose.yml`, `docker-compose.staging.yml`, `scripts/migrate.py` | compose contract tests + successful fresh staging startup | Мигратор завершился с кодом 0 до API/worker; staging DB была новой в отдельном project/volume, readiness подтверждает актуальную schema. |
 | Secret/cache ignore | FIXED IN THIS CHANGE | `.gitignore` | Git ignore/status checks | Исключены локальные `.env`, `secrets/`, Python caches и обычные frontend/build outputs; environment example files остаются в Git.
 
 ## Приоритетные gaps
@@ -59,7 +59,6 @@ Next.js UI (frontend/app, frontend/components, frontend/lib/api.ts)
 1. **Credential rotation требуется.** Во время предыдущей проверки локальный OAuth client secret попал в вывод; кроме того, сканирование Git history нашло Google OAuth client/access tokens и Google API key в старых commits старой/stale ветки (не предках текущего `main`). Текущие значения не показывались и не менялись. По инструкции пользователя credential не отзываются автоматически; владелец должен rotate/revoke затронутые credentials и проверить Google Cloud/Railway secrets. После ротации отдельно решить вопрос очистки истории: force-push/rewrite history не выполнялся.
 ### P1
 
-- Проверить bootstrap на чистой изолированной БД: Docker Engine доступен, но отдельный fresh-volume прогон пока не выполнялся, чтобы не создавать/удалять дополнительную БД без необходимости. Текущая локальная база имеет 36/36 версий миграций.
 - Исправить OAuth branding: страница Google показывала `GOOGLE_CLIENT_ID` как название приложения; такой текст не найден в репозитории и меняется в Google Cloud OAuth branding.
 - Выполнить browser E2E полного Google login → callback → session → real channels → choose → reload → disconnect/reconnect с владельцем аккаунта. Пароль и финальное согласие Google остаются действием владельца аккаунта; живые Google API calls не подтверждены.
 - Связать durable AgentTask/control plane с production WorkflowEngine/renderer в одной наблюдаемой цепочке; сейчас эти системы имеют явную интеграционную границу.
@@ -76,7 +75,9 @@ Next.js UI (frontend/app, frontend/components, frontend/lib/api.ts)
 
 - `.gitignore`: добавлены правила для локальных credentials, cache и build output; существующие пользовательские файлы не удалялись.
 - `docker-compose.yml`: добавлен одноразовый `migrate` service на базе существующего `scripts/migrate.py`; API/worker стартуют только после успешной миграции и не выполняют её параллельно.
-- `tests/test_v23_deployment.py`: добавлены контракты на migration gate и OpenAPI schema build.
+- `docker-compose.staging.yml`: web явно слушает на `0.0.0.0`, worker не наследует неподходящий API HTTP healthcheck.
+- `e2e/tests/app.spec.ts`, `e2e/playwright.config.ts`: creator flow использует актуальный onboarding для AI workspace без fake YouTube channel и даёт до 5 минут на полный render.
+- `tests/test_v23_deployment.py`: контракты проверяют local migration gate, OpenAPI schema build, staging web bind и worker healthcheck.
 - `app/api/privacy.py`: импортирован используемый endpoint-аннотацией `UUID`, чтобы FastAPI строил OpenAPI schema.
 
 ## Проверка в этой сессии
@@ -84,7 +85,7 @@ Next.js UI (frontend/app, frontend/components, frontend/lib/api.ts)
 - Repository/branch/HEAD/remote/worktrees/history: VERIFIED локальными Git-командами; `main` совпадает с локальным `origin/main`.
 - Secret scan: VERIFIED без вывода значений; Git-трекинг в текущем `main` содержит только environment examples, а найденные credential-like values находятся в commits старого stale remote ref и не предшествуют текущему `main`.
 - Runtime: VERIFIED для обновлённого локального Compose stack — web/API/db healthy; worker запущен; one-shot migrate завершился с кодом 0. `GET /login`, `/onboarding/channels`, `/api/v1/health`, `/api/v1/health/live`, `/api/v1/health/ready`, `/openapi.json` отвечают 200. Readiness подтверждает database/schema/encryption.
-- Database migration state: VERIFIED — `schema_migrations` содержит 36 записей, последняя `036_enforce_content_version_timestamps`, что совпадает с последней из 36 версий в рабочей копии. Fresh-volume database отдельно не проверена.
+- Fresh database: VERIFIED на отдельной staging DB/volume: PostgreSQL создался с нуля, bootstrap + 36 миграций завершились до API/worker старта; API readiness — ready.
 - Login UI: Google button и email form видимы в браузере; create-account toggle переключает форму. При ширинах 390px и 768px горизонтального overflow нет. Ранее Google flow дошёл до запроса пароля; пароль/consent не вводились, полный flow не подтверждён.
 - Compose parsing: VERIFIED — `docker compose config --quiet` завершился с кодом 0.
 - Local migration compose contract assertions: VERIFIED against Docker Compose resolved config.
@@ -93,5 +94,6 @@ Next.js UI (frontend/app, frontend/components, frontend/lib/api.ts)
 - Docker/runtime: VERIFIED для локальной dev-среды; это не является проверкой production deployment.
 - pytest: полный suite — 383 passed, 3 skipped, 1 существующая Pydantic deprecation warning.
 - Frontend build: VERIFIED — Next.js 15.5.26 успешно скомпилировал frontend, проверил типы и сгенерировал все 35 статических страниц. Проверка шла на Node 24.19.0 (CI workflow закрепляет Node 22).
+- Local staging E2E: VERIFIED — Playwright прошёл регистрацию test user, создание явно обозначенного `Platform workspace`, генерацию идеи/проекта, governance workflow, FFmpeg MP4 rendering и thumbnail (`1 passed`, около 2.1 минуты). Это не проверяет live Google OAuth.
 - Responsive login check: VERIFIED без горизонтального overflow при 390px и 768px; браузерный account-create toggle также переключился.
-- CI current commit: NOT VERIFIED; GitHub Actions workflow inspected, но remote CI-run status для HEAD недоступен.
+- CI: предыдущий push запуск прошёл backend, frontend, 4 PostgreSQL integration jobs и Remotion smoke; staging browser test выявил устаревший auth assertion и слишком короткий render timeout. Эти причины исправлены, rerun CI для следующего commit будет проверкой итоговой ветки.

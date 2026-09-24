@@ -66,6 +66,8 @@ services:
       WORKFLOW_POLL_SECONDS: "0.5"
       RESEARCH_SCHEDULER_ENABLED: "false"
     command: ["python", "-m", "app.workflows.worker"]
+    healthcheck:
+      disable: true
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -79,6 +81,7 @@ services:
         NEXT_PUBLIC_API_BASE: http://127.0.0.1:8001
     environment:
       NODE_ENV: production
+      HOSTNAME: 0.0.0.0
       NEXT_PUBLIC_API_BASE: http://127.0.0.1:8001
     depends_on:
       api:

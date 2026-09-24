@@ -9,21 +9,21 @@ test("full creator flow: register → channel → ideas → project → rendered
   const password = "Staging-Password-123!";
 
   await page.goto("/login");
-  await expect(page.getByRole("heading", { name: "Welcome back" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Start your studio" })).toBeVisible();
   await page.getByRole("button", { name: "Create a new account" }).click();
   await page.locator("#auth-email").fill(email);
   await page.locator("#auth-password").fill(password);
   await page.locator("#auth-name").fill("Staging Creator");
   await page.locator("#auth-organization").fill("Staging Studio");
   await page.getByRole("button", { name: "Create account" }).click();
-  await page.waitForURL("**/");
+  await page.waitForURL(/\/onboarding\/channels/);
+  await expect(page.getByRole("heading", { name: "Choose the channel we will operate." })).toBeVisible();
+  await page.getByRole("button", { name: /Create a separate AI workspace/ }).click();
+  await page.getByLabel("Workspace name").fill("Staging AI Workspace");
+  await page.getByRole("button", { name: "Create workspace" }).click();
+  await expect(page.getByText("Platform workspace", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /Continue to Dashboard/ }).click();
   await expect(page).toHaveURL(/\/$/);
-
-  await page.goto("/settings");
-  await page.getByLabel("Name").fill("Staging YouTube Channel");
-  await page.getByLabel("Niche").fill("AI technology");
-  await page.getByRole("button", { name: "Create channel workspace" }).click();
-  await expect(page.getByText("Channel created.")).toBeVisible();
 
   await page.goto("/ideas");
   await page.getByLabel("Topic seed").fill("AI agents");
@@ -35,7 +35,7 @@ test("full creator flow: register → channel → ideas → project → rendered
 
   await expect(page.getByRole("heading", { name: "Workflow" })).toBeVisible();
   await page.getByRole("button", { name: "Run AI workflow" }).click();
-  await expect(page.getByText("READY_TO_PUBLISH")).toBeVisible({ timeout: 90_000 });
+  await expect(page.getByText("READY_TO_PUBLISH")).toBeVisible({ timeout: 240_000 });
   await expect(page.locator("video")).toBeVisible();
 
   const projectId = page.url().split("/projects/")[1].split("/")[0];

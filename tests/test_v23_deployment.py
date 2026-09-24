@@ -85,6 +85,8 @@ def test_staging_web_api_host_matches_browser_origin():
     web = data["services"]["web"]
     assert web["build"]["args"]["NEXT_PUBLIC_API_BASE"] == "http://127.0.0.1:8001"
     assert web["environment"]["NEXT_PUBLIC_API_BASE"] == "http://127.0.0.1:8001"
+    assert web["environment"]["HOSTNAME"] == "0.0.0.0"
+    assert data["services"]["worker"]["healthcheck"]["disable"] is True
 
 
 def test_backend_image_runs_as_non_root_and_has_healthcheck():
