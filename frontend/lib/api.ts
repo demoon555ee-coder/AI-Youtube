@@ -92,10 +92,24 @@ export function getStoredChannelId(): string | null {
   return window.localStorage.getItem("youtube_ai_channel_id");
 }
 
-export function storeChannelId(channelId: string): void {
+export function storeChannelId(channelId: string, notify = true): void {
   if (typeof window !== "undefined") {
+    const previous = window.localStorage.getItem("youtube_ai_channel_id");
     window.localStorage.setItem("youtube_ai_channel_id", channelId);
+    if (notify && previous !== channelId) {
+      window.dispatchEvent(new CustomEvent("youtube-ai:channel-changed", { detail: { channelId } }));
+    }
   }
+}
+
+export function subscribeToChannelChanges(handler: (channelId: string) => void): () => void {
+  if (typeof window === "undefined") return () => undefined;
+  const listener = (event: Event) => {
+    const detail = (event as CustomEvent<{ channelId?: string }>).detail;
+    if (detail?.channelId) handler(detail.channelId);
+  };
+  window.addEventListener("youtube-ai:channel-changed", listener);
+  return () => window.removeEventListener("youtube-ai:channel-changed", listener);
 }
 
 export function apiPatch<T>(path: string, body?: unknown): Promise<T> { return request<T>(path, { method: "PATCH", body: body === undefined ? undefined : JSON.stringify(body) }); }
