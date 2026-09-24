@@ -16,5 +16,6 @@ class Channel(Base):
     language: Mapped[str] = mapped_column(String(10), default="en")
     niche: Mapped[str | None] = mapped_column(Text)
     timezone: Mapped[str] = mapped_column(String(64), default="UTC")
+    thumbnail_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

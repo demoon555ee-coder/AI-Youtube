@@ -112,6 +112,15 @@ function ChannelOnboardingContent() {
     </section>
 
     <section className="channelGrid">
+      {channels.length === 0 && <div className="channelEmptyState">
+        <div className="channelCreatePlus">!</div>
+        <h2>No YouTube channels found</h2>
+        <p className="sub">This Google account is connected, but YouTube returned no channels. Create one in YouTube or connect another Google account, then refresh this screen.</p>
+        <div className="actions">
+          <button className="btn primary" disabled={busy} onClick={() => setShowCreateYouTube(true)}>Create YouTube channel</button>
+          <button className="btn" disabled={busy} onClick={() => void load()}>Refresh channels</button>
+        </div>
+      </div>}
       {channels.map(channel => {
         const selectedLabel = selected === channel.id ? "Selected" : "Choose";
         const youtubeId = channel.youtube_channel_id ? " - " + channel.youtube_channel_id : "";

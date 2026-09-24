@@ -1639,7 +1639,14 @@ ALTER TABLE channels
             ALTER COLUMN created_at SET NOT NULL,
             ALTER COLUMN updated_at SET NOT NULL;
         """,
-    ),]
+    ),
+    (
+        "037_channel_thumbnail_url",
+        """
+        ALTER TABLE channels ADD COLUMN IF NOT EXISTS thumbnail_url TEXT NULL;
+        """,
+    ),
+]
 
 
 def _split_sql(sql: str) -> list[str]:

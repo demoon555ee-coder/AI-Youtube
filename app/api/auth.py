@@ -111,6 +111,7 @@ async def google_callback(request: Request, response: Response, db: AsyncSession
                 row.owner_id = str(organization_id)
                 row.organization_id = organization_id
                 row.name = title
+            row.thumbnail_url = channel_data.get("snippet", {}).get("thumbnails", {}).get("high", {}).get("url") or channel_data.get("snippet", {}).get("thumbnails", {}).get("default", {}).get("url")
             conn = await db.scalar(select(YouTubeConnection).where(YouTubeConnection.channel_id == row.id))
             if not conn:
                 db.add(YouTubeConnection(channel_id=row.id, access_token_enc=encrypted_access, refresh_token_enc=encrypted_refresh, token_expiry=expiry, scope=scope))

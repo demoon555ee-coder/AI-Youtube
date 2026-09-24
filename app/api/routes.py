@@ -101,6 +101,7 @@ async def list_channels(db: AsyncSession = Depends(get_db), principal: Principal
                 "language": channel.language,
                 "youtube_channel_id": channel.youtube_channel_id,
                 "youtube_connected": channel.id in connected_ids,
+                "thumbnail_url": getattr(channel, "thumbnail_url", None),
             }
             for channel in channels
         ]
