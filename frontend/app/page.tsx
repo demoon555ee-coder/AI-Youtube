@@ -10,6 +10,9 @@ type Dashboard = { channel: { id: string; name: string; niche?: string; language
 type Channels = { channels: { id: string; name: string; niche?: string; language: string }[] };
 type ProviderStatus = { provider: string; kind: string; tier: string; priority: number; runtime_available: boolean; capabilities: Record<string, boolean> };
 type RuntimeAvailability = { enabled: boolean; services: Record<string, ProviderStatus[]> };
+type GovernanceSummary = { policy?: { emergency_kill_switch?: boolean; default_mode?: string }; approvals?: any[] };
+type PlanSummary = { id: string; name: string; status: string; auto_publish: boolean };
+type PlanDetail = { plan: PlanSummary; items: { id: string; title: string; scheduled_for: string; status: string }[] };
 
 function format(n: number) { return new Intl.NumberFormat("en-US", { notation: n >= 1000 ? "compact" : "standard", maximumFractionDigits: 1 }).format(n); }
 
@@ -18,6 +21,8 @@ export default function Dashboard() {
   const [channels, setChannels] = useState<Channels["channels"]>([]);
   const [selectedChannelId, setSelectedChannelId] = useState<string | null>(null);
   const [runtime, setRuntime] = useState<RuntimeAvailability | null>(null);
+  const [governance, setGovernance] = useState<GovernanceSummary | null>(null);
+  const [plan, setPlan] = useState<PlanDetail | null>(null);
   const [error, setError] = useState("");
 
   async function load(preferredChannelId?: string | null) {
@@ -37,31 +42,41 @@ export default function Dashboard() {
       } catch {
         setRuntime(null);
       }
+      if (channelId) {
+        try {
+          const g = await apiGet<GovernanceSummary>("/api/v1/governance/channels/" + channelId + "/policy");
+          setGovernance(g);
+          const plans = await apiGet<{ plans: PlanSummary[] }>("/api/v1/autopilot/channels/" + channelId + "/plans");
+          const first = plans.plans?.[0];
+          setPlan(first ? await apiGet<PlanDetail>("/api/v1/autopilot/channels/" + channelId + "/plans/" + first.id) : null);
+        } catch {
+          setGovernance(null);
+          setPlan(null);
+        }
+      } else {
+        setGovernance(null);
+        setPlan(null);
+      }
       setError("");
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to load dashboard"); }
   }
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => { void load(); }, 5000);
+    const timer = window.setInterval(() => { void load(); }, 10000);
     return () => window.clearInterval(timer);
   }, []);
-
-  function runtimeBadge(provider?: ProviderStatus) {
-    return provider?.runtime_available ? "Ready" : "Unavailable";
-  }
 
   function findProvider(service: string, name: string) {
     return runtime?.services?.[service]?.find(item => item.provider === name);
   }
 
-  function chooseProvider(service: string, preferred: string[]) {
-    const candidates = runtime?.services?.[service] || [];
-    return preferred.map(name => candidates.find(item => item.provider === name)).find(item => item?.runtime_available)
-      || preferred.map(name => candidates.find(item => item.provider === name)).find(Boolean);
-  }
-
   const active = dashboard?.projects.find(p => !["PUBLISHED", "READY_TO_PUBLISH", "FAILED"].includes(p.status));
+  const pendingApprovals = governance?.approvals?.length ?? 0;
+  const nextItem = plan?.items?.find(i => ["SCHEDULED", "PLANNED", "READY"].includes(i.status)) ?? plan?.items?.[0];
+  const nextPublish = nextItem?.scheduled_for
+    ? new Date(nextItem.scheduled_for + "Z").toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
+    : "Не запланировано";
   const statusStep: Record<string, number> = { QUEUED: 0, RESEARCHING: 0, SCRIPTING: 1, STORYBOARDING: 2, DIRECTING_SCENES: 3, GENERATING_ASSETS: 4, EDITING: 5, GENERATING_THUMBNAIL: 6, QA: 6, READY_TO_PUBLISH: 7, PUBLISHED: 7, FAILED: 0 };
   const activeIndex = active ? statusStep[active.status] ?? -1 : -1;
 
@@ -84,27 +99,10 @@ export default function Dashboard() {
         <div className="pipeline">{steps.map((step, i) => <div key={step} className={`step ${activeIndex >= 0 && i < activeIndex ? "done" : ""} ${activeIndex === i ? "active" : ""}`}><div className="dot"/><div className="name">{step}</div></div>)}</div>
       </div>
 
-      <div className="panel" style={{marginBottom:16}}>
-        <div className="cardTitle">
-          <div><h2>Provider readiness</h2><p className="sub">Runtime checks show which providers can be used now. Secret values are never displayed.</p></div>
-          <Link className="btn" href="/routing">Open routing</Link>
-        </div>
-        {!runtime?.enabled ? <div className="empty">Provider health is unavailable or disabled.</div> : <div className="grid grid3">
-          {([
-            { label: "Generative visuals", item: findProvider("visual", "openai_image") || findProvider("image", "openai_image") || findProvider("image", "stability_image") || findProvider("image", "mock_png") },
-            { label: "Stock B-roll", item: findProvider("video", "pexels_video") },
-            { label: "Voice", item: findProvider("tts", "elevenlabs") || findProvider("tts", "openai_tts") || findProvider("tts", "espeak") },
-          ] as Array<{ label: string; item?: ProviderStatus }>).map(({ label, item }) => {
-            const candidate = item;
-            const capabilityText = candidate ? Object.keys(candidate.capabilities || {}).filter(k => candidate.capabilities[k]).join(", ") : "";
-            return <div className="stat" key={label}>
-              <span className="label">{label}</span>
-              <div className="n">{candidate?.provider || "Not configured"}</div>
-              <span className={"badge " + (candidate?.runtime_available ? "success" : "danger")}>{runtimeBadge(candidate)}</span>
-              <div className="mini" style={{marginTop:8}}>{candidate ? candidate.tier + (capabilityText ? " · " + capabilityText : "") : "Add/configure a provider to enable this path."}</div>
-            </div>;
-          })}
-        </div>}
+      <div className="grid grid3" style={{marginBottom:10}}>
+        <section className="panel commandCard"><div className="cardTitle"><div><h2>Следующее действие ИИ</h2><p className="sub">Приоритет текущего состояния канала.</p></div><span className="badge success">Live</span></div><div className="commandValue">{active ? "Продолжить производство" : "Запустить исследование"}</div><p className="mini">{active ? (active.title || active.topic) : "Нет активного проекта — Content Factory готова."}</p><div style={{marginTop:8}}><Link className="btn primary" href={active ? "/projects/"+active.id : "/ideas"}>{active ? "Продолжить" : "Создать идею"}</Link></div></section>
+        <section className="panel commandCard"><div className="cardTitle"><h2>Контроль и автопилот</h2><Link className="btn" href="/governance">Управление</Link></div><div className="commandStats"><div><span className="label">Согласования</span><strong>{pendingApprovals}</strong></div><div><span className="label">Kill switch</span><strong>{governance?.policy?.emergency_kill_switch ? "STOP" : "OK"}</strong></div><div><span className="label">Автопилот</span><strong>{plan?.plan.status || "Нет плана"}</strong></div><div><span className="label">Публикация</span><strong>{nextPublish}</strong></div></div></section>
+        <section className="panel commandCard"><div className="cardTitle"><h2>Медиа-готовность</h2><Link className="btn" href="/routing">Routing</Link></div><div className="commandStats">{[["Видео","video","runway"],["Изображения","image","openai_image"],["Голос","tts","elevenlabs"]].map(([label,service,provider])=>{const item=findProvider(service,provider);return <div key={label}><span className="label">{label}</span><strong>{item?.runtime_available ? "Готов" : "Недоступен"}</strong></div>;})}</div></section>
       </div>
 
       <div className="pinBoard">
