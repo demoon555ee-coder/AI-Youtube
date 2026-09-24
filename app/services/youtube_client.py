@@ -105,4 +105,3 @@ def query_analytics(credentials: Credentials, channel_id: str, start_date: str, 
         params["filters"] = filters
 
     return youtube_analytics_api(credentials).reports().query(**params).execute()
-
