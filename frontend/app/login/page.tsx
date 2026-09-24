@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { apiPost } from "../../lib/api";
 import { LanguageSwitcher, LocalizedContent } from "../../components/Locale";
@@ -14,6 +14,12 @@ export default function LoginPage() {
   const [organizationName, setOrganizationName] = useState("My YouTube Studio");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
+
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get("reason");
+    setSessionExpired(reason === "session-expired");
+  }, []);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -70,6 +76,7 @@ export default function LoginPage() {
         <div className="kicker">Добро пожаловать</div>
         <h1>{mode === "login" ? "Откройте свою студию" : "Создайте свою студию"}</h1>
         <p className="sub">Войдите через Google — мы загрузим доступные вашему аккаунту каналы YouTube. Затем вы выберете канал для работы.</p>
+        {sessionExpired && <div className="notice" style={{ marginTop: 16 }}>Сессия завершилась. Войдите снова, чтобы продолжить работу.</div>}
         {error && <div className="error" style={{ marginTop: 16 }}>{error}</div>}
 
         <button className="googleBtn" disabled={busy} onClick={() => void signInWithGoogle()}>

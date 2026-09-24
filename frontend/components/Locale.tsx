@@ -153,8 +153,51 @@ const ru: Record<string, string> = {
   "Start a project to activate the pipeline.": "Создайте проект, чтобы запустить конвейер.", "Net subscribers from the analytics layer for this selected channel.": "Чистый прирост подписчиков выбранного канала.",
 };
 
+const autoRu: Array<[RegExp, string]> = [
+  [/Failed to load/gi, "Не удалось загрузить"], [/Unable to load/gi, "Не удалось загрузить"],
+  [/Unable to create/gi, "Не удалось создать"], [/Could not create/gi, "Не удалось создать"],
+  [/Failed to create/gi, "Не удалось создать"], [/Failed to refresh/gi, "Не удалось обновить"],
+  [/Generation failed/gi, "Ошибка генерации"], [/Plan generation failed/gi, "Ошибка генерации плана"],
+  [/Activation failed/gi, "Ошибка активации"], [/Pause failed/gi, "Ошибка приостановки"],
+  [/Materialization failed/gi, "Ошибка материализации"], [/Cancellation failed/gi, "Ошибка отмены"],
+  [/OAuth start failed/gi, "Ошибка запуска OAuth"], [/Export failed/gi, "Ошибка экспорта"],
+  [/Deletion request failed/gi, "Ошибка запроса удаления"], [/Workflow failed/gi, "Ошибка рабочего процесса"],
+  [/Retry failed/gi, "Ошибка повторного запуска"], [/Research failed/gi, "Ошибка исследования"],
+  [/Idea generation failed/gi, "Ошибка генерации идей"], [/Scheduler action failed/gi, "Ошибка действия планировщика"],
+  [/Create a channel in Settings first/gi, "Сначала создайте канал в настройках"], [/Create a channel first/gi, "Сначала создайте канал"],
+  [/Select a channel first/gi, "Сначала выберите канал"], [/Enter a project ID/gi, "Введите ID проекта"],
+  [/No active project/gi, "Нет активного проекта"], [/No projects yet/gi, "Проектов пока нет"],
+  [/No ideas yet/gi, "Идей пока нет"], [/No candidates/gi, "Кандидатов нет"], [/No channels linked yet/gi, "Каналы пока не подключены"],
+  [/No pending approvals/gi, "Ожидающих согласований нет"], [/No decisions yet/gi, "Решений пока нет"],
+  [/No execution runs yet/gi, "Запусков выполнения пока нет"], [/No experiments yet/gi, "Экспериментов пока нет"],
+  [/Generate 10 ideas/gi, "Сгенерировать 10 идей"], [/Generate content plan/gi, "Сгенерировать контент-план"],
+  [/Create project/gi, "Создать проект"], [/Create schedule/gi, "Создать расписание"], [/Build plan/gi, "Создать план"],
+  [/Analyze video/gi, "Проанализировать видео"], [/Scan opportunity/gi, "Сканировать возможности"],
+  [/Open project/gi, "Открыть проект"], [/Open analytics/gi, "Открыть аналитику"], [/Open routing/gi, "Открыть маршрутизацию"],
+  [/Open Autopilot/gi, "Открыть автопилот"], [/Connect channel/gi, "Подключить канал"], [/Choose plan/gi, "Выбрать тариф"],
+  [/Enable/gi, "Включить"], [/Disable/gi, "Отключить"], [/Pause/gi, "Приостановить"], [/Approve/gi, "Одобрить"], [/Reject/gi, "Отклонить"],
+  [/Delete/gi, "Удалить"], [/Cancel/gi, "Отмена"], [/Save/gi, "Сохранить"], [/Search/gi, "Поиск"], [/Refresh/gi, "Обновить"],
+  [/Loading\.\.\./gi, "Загрузка…"], [/Loading/gi, "Загрузка"], [/Ready/gi, "Готово"], [/Unavailable/gi, "Недоступно"],
+  [/Enabled/gi, "Включено"], [/Disabled/gi, "Отключено"], [/Current/gi, "Текущий"], [/New/gi, "Новый"],
+  [/Pattern/gi, "Паттерн"], [/Confidence/gi, "Уверенность"], [/Competition/gi, "Конкуренция"], [/Demand/gi, "Спрос"],
+  [/Duration/gi, "Длительность"], [/Forecast/gi, "Прогноз"], [/Hypothesis/gi, "Гипотеза"], [/Metric/gi, "Метрика"],
+  [/Cost/gi, "Стоимость"], [/Status/gi, "Статус"], [/Actions/gi, "Действия"], [/Description/gi, "Описание"],
+  [/Created/gi, "Создано"], [/Updated/gi, "Обновлено"], [/Date/gi, "Дата"], [/Title/gi, "Название"], [/Type/gi, "Тип"],
+  [/Views/gi, "Просмотры"], [/Subscribers/gi, "Подписчики"], [/Watch time/gi, "Время просмотра"], [/Projects/gi, "Проекты"],
+  [/Channel UUID/gi, "UUID канала"], [/Channel ID/gi, "ID канала"], [/Research signal/gi, "Сигнал исследования"],
+  [/Daily Opportunity Scan/gi, "Ежедневное сканирование возможностей"], [/AI agents/gi, "ИИ-агенты"],
+  [/Live backend data/gi, "Данные в реальном времени"], [/Not configured/gi, "Не настроено"]
+];
+
+function autoTranslateRu(text: string): string {
+  if (!text || !/[A-Za-z]/.test(text)) return text;
+  let result = text;
+  for (const [pattern, replacement] of autoRu) result = result.replace(pattern, replacement);
+  return result;
+}
+
 type LocaleContextValue = { language: Language; setLanguage: (language: Language) => void; t: (text: string) => string };
-const LocaleContext = createContext<LocaleContextValue>({ language: "ru", setLanguage: () => undefined, t: text => ru[text] || text });
+const LocaleContext = createContext<LocaleContextValue>({ language: "ru", setLanguage: () => undefined, t: text => ru[text] || autoTranslateRu(text) });
 
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>("ru");
@@ -167,7 +210,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, next);
     setLanguageState(next);
   }
-  const t = (text: string) => language === "ru" ? ru[text] || text : text;
+  const t = (text: string) => language === "ru" ? ru[text] || autoTranslateRu(text) : text;
   return <LocaleContext.Provider value={{ language, setLanguage, t }}>{children}</LocaleContext.Provider>;
 }
 

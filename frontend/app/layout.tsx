@@ -2,8 +2,8 @@ import "./globals.css";
 import { LocaleProvider } from "../components/Locale";
 
 export const metadata = {
-  title: "YouTube AI Platform",
-  description: "Autonomous YouTube content operating system"
+  title: "YouTube AI — студия YouTube-каналов",
+  description: "Единая AI-платформа для исследования, создания, производства, публикации и аналитики YouTube-контента"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
