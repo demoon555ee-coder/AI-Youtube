@@ -52,6 +52,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
+    if (response.status === 401 && typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+      window.localStorage.removeItem("youtube_ai_channel_id");
+      window.location.assign("/login?reason=session-expired");
+      throw new Error("Session expired");
+    }
     let detail = await response.text();
     try {
       const parsed = JSON.parse(detail);
