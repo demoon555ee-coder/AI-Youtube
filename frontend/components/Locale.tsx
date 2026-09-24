@@ -148,6 +148,9 @@ const ru: Record<string, string> = {
   "Yes": "Да", "YouTube Data API": "YouTube Data API", "Trend boost": "Рост тренда", "Trend events": "События трендов",
   "Heuristic prioritization — signals are evidence for planning, not guaranteed outcomes.": "Приоритеты рассчитываются эвристически: сигналы помогают планированию, но не гарантируют результат.",
   "CTR": "CTR", "HTTP JSON": "HTTP JSON", "G": "G",
+  "Open Autopilot": "Открыть автопилот", "Connect channel": "Подключить канал", "No active project": "Нет активного проекта",
+  "Your current project is moving through the production graph.": "Текущий проект проходит этапы производственного графа.",
+  "Start a project to activate the pipeline.": "Создайте проект, чтобы запустить конвейер.", "Net subscribers from the analytics layer for this selected channel.": "Чистый прирост подписчиков выбранного канала.",
 };
 
 type LocaleContextValue = { language: Language; setLanguage: (language: Language) => void; t: (text: string) => string };
