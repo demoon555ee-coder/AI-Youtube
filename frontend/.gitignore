@@ -1,0 +1,8 @@
+# Next.js build output
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# Dependencies installed from the frontend package manifest and lockfile
+node_modules/

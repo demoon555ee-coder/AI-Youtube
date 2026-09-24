@@ -1,0 +1,40 @@
+# Local credentials and environment files. Keep checked-in examples available.
+.env
+.env.*
+!.env.example
+!.env.*.example
+secrets/
+
+# Python caches and test reports.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local Python environments.
+.venv/
+venv/
+ENV/
+
+# Frontend and Remotion build/dependency output.
+node_modules/
+frontend/pnpm-lock.yaml
+.pnpm-store/
+frontend/.next/
+frontend/out/
+frontend/coverage/
+app/remotion/node_modules/
+app/remotion/out/
+e2e/node_modules/
+e2e/playwright-report/
+e2e/test-results/
+
+# Editor and operating-system files.
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
