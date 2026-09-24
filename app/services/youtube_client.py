@@ -14,15 +14,25 @@ def youtube_analytics_api(credentials: Credentials):
 
 
 def get_mine_channels(credentials: Credentials) -> list[dict]:
-    result = youtube_data_api(credentials).channels().list(
-        part="id,snippet,contentDetails,statistics",
-        mine=True,
-        maxResults=50,
-    ).execute()
-    items = result.get("items", [])
-    if not items:
-        raise RuntimeError("No YouTube channel found for authenticated account")
-    return items
+    youtube = youtube_data_api(credentials)
+    channels: list[dict] = []
+    page_token = None
+    while True:
+        params = {
+            "part": "id,snippet,contentDetails,statistics",
+            "mine": True,
+            "maxResults": 50,
+        }
+        if page_token:
+            params["pageToken"] = page_token
+        result = youtube.channels().list(**params).execute()
+        channels.extend(result.get("items", []))
+        page_token = result.get("nextPageToken")
+        if not page_token:
+            break
+    # A Google identity can sign in before it has a YouTube channel. An empty
+    # result is valid; callers that require a channel can handle that explicitly.
+    return channels
 
 
 def get_mine_channel(credentials: Credentials) -> dict:

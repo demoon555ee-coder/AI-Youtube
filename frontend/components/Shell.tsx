@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiGet, apiPost, getStoredChannelId, storeChannelId } from "../lib/api";
+import { LanguageSwitcher, LocalizedContent, useLocale } from "./Locale";
 
 const links = [
   ["Dashboard", "/"],
@@ -37,6 +38,7 @@ type ShellChannel = { id: string; name: string; youtube_channel_id?: string | nu
 export default function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useLocale();
   const [channels, setChannels] = useState<ShellChannel[]>([]);
   const [activeChannel, setActiveChannel] = useState<ShellChannel | null>(null);
 
@@ -56,12 +58,13 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     <div className="shell">
       <aside className="sidebar">
         <div className="brand">YouTube <span>AI</span></div>
-        <div className="workspace">AUTONOMOUS CONTENT OS</div>
-        <Link href="/onboarding/channels" className="accountPicker" title="Change YouTube account or channel">
+        <div className="workspace">{t("AUTONOMOUS CONTENT OS")}</div>
+        <LanguageSwitcher className="shellLanguage" />
+        <Link href="/onboarding/channels" className="accountPicker" title={t("Change YouTube account or channel")}>
           <span className="accountAvatar">{activeChannel?.name?.slice(0, 1).toUpperCase() || "Y"}</span>
           <span style={{minWidth:0,flex:1}}>
-            <strong style={{display:"block",fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeChannel?.name || "Choose channel"}</strong>
-            <span className="mini">{channels.length > 1 ? `${channels.length} channels connected` : "YouTube workspace"}</span>
+            <strong style={{display:"block",fontSize:12,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{activeChannel?.name || t("Choose channel")}</strong>
+            <span className="mini">{channels.length > 1 ? `${channels.length} ${t("channels connected")}` : t("YouTube workspace")}</span>
           </span>
           <span aria-hidden="true">⌄</span>
         </Link>
@@ -69,15 +72,15 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         <nav className="nav">
           {links.map(([label, href]) => {
             const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
-            return <Link key={href} href={href} className={active ? "active" : ""}>{label}</Link>;
+            return <Link key={href} href={href} className={active ? "active" : ""}>{t(label)}</Link>;
           })}
         </nav>
         <div className="sidebarFoot">
-          <span className="dotLive" /> Secure workspace
-          <button className="btn" style={{marginTop:10,width:"100%"}} onClick={()=>void logout()}>Sign out</button>
+          <span className="dotLive" /> {t("Secure workspace")}
+          <button className="btn" style={{marginTop:10,width:"100%"}} onClick={()=>void logout()}>{t("Sign out")}</button>
         </div>
       </aside>
-      <main className="main">{children}</main>
+      <main className="main"><LocalizedContent>{children}</LocalizedContent></main>
     </div>
   );
 }

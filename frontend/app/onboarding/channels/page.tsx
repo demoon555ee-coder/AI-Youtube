@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiGet, apiPost, getStoredChannelId, storeChannelId } from "../../../lib/api";
+import { LanguageSwitcher, LocalizedContent, useLocale } from "../../../components/Locale";
 
 type Channel = {
   id: string;
@@ -15,6 +16,7 @@ type Channel = {
 };
 
 function ChannelOnboardingContent() {
+  const { language } = useLocale();
   const router = useRouter();
   const search = useSearchParams();
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -95,16 +97,17 @@ function ChannelOnboardingContent() {
   }
 
   if (loading) {
-    return <main className="authPage"><div className="authCard"><div className="kicker">Workspace setup</div><h1>Loading your channels…</h1><p className="sub">Preparing the YouTube accounts available to this Google identity.</p></div></main>;
+    return <><LanguageSwitcher className="pageLanguage" /><LocalizedContent><main className="authPage"><div className="authCard"><div className="kicker">Workspace setup</div><h1>Loading your channels…</h1><p className="sub">Preparing the YouTube accounts available to this Google identity.</p></div></main></LocalizedContent></>;
   }
 
-  return <main className="channelSetup">
+  return <><LanguageSwitcher className="pageLanguage" /><LocalizedContent><main className="channelSetup">
     <section className="channelSetupHero">
       <div className="authBrand"><span className="authBrandMark" /><span>YouTube AI</span></div>
       <div className="kicker">Your YouTube accounts</div>
       <h1>Choose the channel we will operate.</h1>
       <p className="sub">Google is connected. We loaded every YouTube channel available to this account. Pick one to make it the active AI workspace.</p>
-      {search.get("google") === "connected" && <div className="notice" style={{ marginTop: 18 }}>Google connected. We found {channels.length} available channel{channels.length === 1 ? "" : "s"}.</div>}
+      {search.get("google") === "connected" && search.get("channels") === "unavailable" && <div className="notice" style={{ marginTop: 18 }}>Google connected, but YouTube did not return the channel list. You can create a workspace now or change Google account and try again.</div>}
+      {search.get("google") === "connected" && search.get("channels") !== "unavailable" && <div className="notice" style={{ marginTop: 18 }}>{language === "ru" ? `Google подключён. Найдено каналов: ${channels.length}.` : `Google connected. We found ${channels.length} available channel${channels.length === 1 ? "" : "s"}.`}</div>}
       {error && <div className="error" style={{ marginTop: 18 }}>{error}</div>}
     </section>
 
@@ -165,9 +168,9 @@ function ChannelOnboardingContent() {
         </div>
       </div>
     </div>}
-  </main>;
+  </main></LocalizedContent></>;
 }
 
 export default function ChannelOnboardingPage() {
-  return <Suspense fallback={<main className="authPage"><div className="authCard"><div className="kicker">Workspace setup</div><h1>Preparing your channels…</h1></div></main>}><ChannelOnboardingContent /></Suspense>;
+  return <Suspense fallback={<><LanguageSwitcher className="pageLanguage" /><LocalizedContent><main className="authPage"><div className="authCard"><div className="kicker">Workspace setup</div><h1>Preparing your channels…</h1></div></main></LocalizedContent></>}><ChannelOnboardingContent /></Suspense>;
 }
