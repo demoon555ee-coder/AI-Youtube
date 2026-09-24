@@ -63,7 +63,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     void load();
-    const timer = window.setInterval(() => { void load(); }, 10000);
+    const timer = window.setInterval(() => { void load(); }, 5000);
     return () => window.clearInterval(timer);
   }, []);
 
@@ -76,7 +76,7 @@ export default function Dashboard() {
   const nextItem = plan?.items?.find(i => ["SCHEDULED", "PLANNED", "READY"].includes(i.status)) ?? plan?.items?.[0];
   const nextPublish = nextItem?.scheduled_for
     ? new Date(nextItem.scheduled_for + "Z").toLocaleString("ru-RU", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })
-    : "Не запланировано";
+    : "Not scheduled";
   const statusStep: Record<string, number> = { QUEUED: 0, RESEARCHING: 0, SCRIPTING: 1, STORYBOARDING: 2, DIRECTING_SCENES: 3, GENERATING_ASSETS: 4, EDITING: 5, GENERATING_THUMBNAIL: 6, QA: 6, READY_TO_PUBLISH: 7, PUBLISHED: 7, FAILED: 0 };
   const activeIndex = active ? statusStep[active.status] ?? -1 : -1;
 
@@ -100,15 +100,15 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid3" style={{marginBottom:10}}>
-        <section className="panel commandCard"><div className="cardTitle"><div><h2>Следующее действие ИИ</h2><p className="sub">Приоритет текущего состояния канала.</p></div><span className="badge success">Live</span></div><div className="commandValue">{active ? "Продолжить производство" : "Запустить исследование"}</div><p className="mini">{active ? (active.title || active.topic) : "Нет активного проекта — Content Factory готова."}</p><div style={{marginTop:8}}><Link className="btn primary" href={active ? "/projects/"+active.id : "/ideas"}>{active ? "Продолжить" : "Создать идею"}</Link></div></section>
-        <section className="panel commandCard"><div className="cardTitle"><h2>Контроль и автопилот</h2><Link className="btn" href="/governance">Управление</Link></div><div className="commandStats"><div><span className="label">Согласования</span><strong>{pendingApprovals}</strong></div><div><span className="label">Kill switch</span><strong>{governance?.policy?.emergency_kill_switch ? "STOP" : "OK"}</strong></div><div><span className="label">Автопилот</span><strong>{plan?.plan.status || "Нет плана"}</strong></div><div><span className="label">Публикация</span><strong>{nextPublish}</strong></div></div></section>
-        <section className="panel commandCard"><div className="cardTitle"><h2>Медиа-готовность</h2><Link className="btn" href="/routing">Routing</Link></div><div className="commandStats">{[["Видео","video","runway"],["Изображения","image","openai_image"],["Голос","tts","elevenlabs"]].map(([label,service,provider])=>{const item=findProvider(service,provider);return <div key={label}><span className="label">{label}</span><strong>{item?.runtime_available ? "Готов" : "Недоступен"}</strong></div>;})}</div></section>
+        <section className="panel commandCard"><div className="cardTitle"><div><h2>Next AI action</h2><p className="sub">Priority from the channel's current state.</p></div><span className="badge success">Live</span></div><div className="commandValue">{active ? "Continue production" : "Start research"}</div><p className="mini">{active ? (active.title || active.topic) : "No active project - Content Factory is ready."}</p><div style={{marginTop:8}}><Link className="btn primary" href={active ? "/projects/"+active.id : "/ideas"}>{active ? "Continue" : "Create idea"}</Link></div></section>
+        <section className="panel commandCard"><div className="cardTitle"><h2>Control & autopilot</h2><Link className="btn" href="/governance">Governance</Link></div><div className="commandStats"><div><span className="label">Approvals</span><strong>{pendingApprovals}</strong></div><div><span className="label">Kill switch</span><strong>{governance?.policy?.emergency_kill_switch ? "STOP" : "OK"}</strong></div><div><span className="label">Autopilot</span><strong>{plan?.plan.status || "No plan"}</strong></div><div><span className="label">Publication</span><strong>{nextPublish}</strong></div></div></section>
+        <section className="panel commandCard"><div className="cardTitle"><h2>Media readiness</h2><Link className="btn" href="/routing">Routing</Link></div><div className="commandStats">{[["Video","video","runway"],["Images","image","openai_image"],["Voice","tts","elevenlabs"]].map(([label,service,provider])=>{const item=findProvider(service,provider);return <div key={label}><span className="label">{label}</span><strong>{item?.runtime_available ? "Ready" : "Unavailable"}</strong></div>;})}</div></section>
       </div>
 
       <div className="pinBoard">
         <article className="pinCard">
           <div className="pinMedia persimmon"><strong style={{fontSize:24,letterSpacing:"-.03em"}}>Build the next video.</strong></div>
-          <div className="pinBody"><strong>Content Factory</strong><p>Turn a research-backed idea into a governed production workflow.</p><div style={{marginTop:12}}><Link href="/ideas" className="btn primary">Start from idea →</Link></div></div>
+          <div className="pinBody"><strong>Content Factory</strong><p>Turn a research-backed idea into a governed production workflow.</p><div style={{marginTop:12}}><Link href="/ideas" className="btn primary">Start from idea -></Link></div></div>
         </article>
         <article className="pinCard">
           <div className="pinMedia blue"><strong style={{fontSize:24,letterSpacing:"-.03em"}}>{active?.status || "No active run"}</strong></div>
@@ -124,7 +124,7 @@ export default function Dashboard() {
         </article>
         <article className="pinCard">
           <div className="pinMedia plum"><strong style={{fontSize:22,letterSpacing:"-.03em"}}>Channel Brain</strong></div>
-          <div className="pinBody"><strong>Learning loop</strong><p>Analytics → diagnosis → memory → next idea, while governance remains in control.</p><div style={{marginTop:12}}><Link href="/brain" className="btn">Open brain</Link></div></div>
+          <div className="pinBody"><strong>Learning loop</strong><p>Analytics -> diagnosis -> memory -> next idea, while governance remains in control.</p><div style={{marginTop:12}}><Link href="/brain" className="btn">Open brain</Link></div></div>
         </article>
         <article className="pinCard">
           <div className="pinMedia blue"><strong style={{fontSize:22,letterSpacing:"-.03em"}}>Media stack</strong></div>

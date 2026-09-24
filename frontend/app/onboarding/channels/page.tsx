@@ -107,14 +107,14 @@ function ChannelOnboardingContent() {
       <h1>Choose the channel we will operate.</h1>
       <p className="sub">Google is connected. We loaded every YouTube channel available to this account. Pick one to make it the active AI workspace.</p>
       {search.get("google") === "connected" && search.get("channels") === "unavailable" && <div className="notice" style={{ marginTop: 18 }}>Google connected, but YouTube did not return the channel list. You can create a workspace now or change Google account and try again.</div>}
-      {search.get("google") === "connected" && search.get("channels") !== "unavailable" && <div className="notice" style={{ marginTop: 18 }}>{language === "ru" ? `Google подключён. Найдено каналов: ${channels.length}.` : `Google connected. We found ${channels.length} available channel${channels.length === 1 ? "" : "s"}.`}</div>}
+      {search.get("google") === "connected" && search.get("channels") !== "unavailable" && <div className="notice" style={{ marginTop: 18 }}>{language === "ru" ? `Google connected. Channels found: ${channels.length}.` : `Google connected. We found ${channels.length} available channel${channels.length === 1 ? "" : "s"}.`}</div>}
       {error && <div className="error" style={{ marginTop: 18 }}>{error}</div>}
     </section>
 
     <section className="channelGrid">
       {channels.map(channel => {
         const selectedLabel = selected === channel.id ? "Selected" : "Choose";
-        const youtubeId = channel.youtube_channel_id ? " · " + channel.youtube_channel_id : "";
+        const youtubeId = channel.youtube_channel_id ? " - " + channel.youtube_channel_id : "";
         return <button key={channel.id} className={selected === channel.id ? "channelCard selected" : "channelCard"} onClick={() => choose(channel.id)}>
           <div className="channelThumb">{channel.thumbnail_url ? <img src={channel.thumbnail_url} alt="" /> : <span>{channel.name.slice(0, 1).toUpperCase()}</span>}</div>
           <div className="channelCardBody">
@@ -130,7 +130,7 @@ function ChannelOnboardingContent() {
         <span className="mini">Create the channel in YouTube, then bring it into this workspace.</span>
       </button>
       <button className="channelCreateCard" onClick={() => setCreateOpen(true)}>
-        <span className="channelCreatePlus">✦</span>
+        <span className="channelCreatePlus">*</span>
         <strong>Create a separate AI workspace</strong>
         <span className="mini">Keep another channel's strategy, projects and governance separate.</span>
       </button>
@@ -140,7 +140,7 @@ function ChannelOnboardingContent() {
         <button className="btn" disabled={busy} onClick={() => void connectAnotherGoogleAccount()}>Change Google account</button>
         <span className="mini">The Google account chooser opens again, then we reload that account's YouTube channels.</span>
       </div>
-      <button className="btn primary" disabled={!selected || busy} onClick={continueToStudio}>Continue to Dashboard →</button>
+      <button className="btn primary" disabled={!selected || busy} onClick={continueToStudio}>Continue to Dashboard -></button>
     </section>
 
     {showCreateYouTube && <div className="modalBackdrop" onClick={() => setShowCreateYouTube(false)}>

@@ -61,11 +61,11 @@ export default function LoginPage() {
       <div className="visualGrid" />
       <div className="welcomeVisualCopy">
         <div className="authBrand visualBrand"><span className="authBrandMark">●</span><span>YouTube AI</span></div>
-        <div className="kicker visualKicker">Автономная платформа для авторов</div>
-        <h1>От идеи до опубликованного видео.</h1>
-        <p>Исследуйте. Создавайте. Производите. Публикуйте. Учитесь. Единое управляемое пространство для каждого канала YouTube.</p>
+        <div className="kicker visualKicker">Autonomous platform for creators</div>
+        <h1>From idea to published video.</h1>
+        <p>Research. Create. Produce. Publish. Learn. One governed workspace for every YouTube channel.</p>
         <div className="visualFlow">
-          {["Исследование","Сценарий","Производство","Публикация","Обучение"].map((step, index) => <span key={step} className="flowStep"><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}
+          {["Research","Script","Production","Publishing","Learning"].map((step, index) => <span key={step} className="flowStep"><i>{String(index + 1).padStart(2, "0")}</i>{step}</span>)}
         </div>
       </div>
     </section>
@@ -73,31 +73,31 @@ export default function LoginPage() {
     <section className="welcomeAuthPane">
       <div className="authCard">
         <div className="authBrand mobileBrand"><span className="authBrandMark">●</span><span>YouTube AI</span></div>
-        <div className="kicker">Добро пожаловать</div>
-        <h1>{mode === "login" ? "Откройте свою студию" : "Создайте свою студию"}</h1>
-        <p className="sub">Войдите через Google — мы загрузим доступные вашему аккаунту каналы YouTube. Затем вы выберете канал для работы.</p>
-        {sessionExpired && <div className="notice" style={{ marginTop: 16 }}>Сессия завершилась. Войдите снова, чтобы продолжить работу.</div>}
+        <div className="kicker">Welcome</div>
+        <h1>{mode === "login" ? "Open your studio" : "Create your studio"}</h1>
+        <p className="sub">Sign in with Google - we will load the YouTube channels available to your account. Then choose the channel to work with.</p>
+        {sessionExpired && <div className="notice" style={{ marginTop: 16 }}>Your session expired. Sign in again to continue.</div>}
         {error && <div className="error" style={{ marginTop: 16 }}>{error}</div>}
 
         <button className="googleBtn" disabled={busy} onClick={() => void signInWithGoogle()}>
           <span className="googleIcon">G</span>
-          <span>{busy ? "Подключение…" : "Продолжить с Google"}</span>
+          <span>{busy ? "Connecting..." : "Continue with Google"}</span>
         </button>
 
-        <div className="authDivider"><span>или</span></div>
+        <div className="authDivider"><span>or</span></div>
 
         <form onSubmit={(e) => void submit(e)} className="stack">
-          {mode === "register" && <div className="field"><label htmlFor="auth-name">Имя</label><input id="auth-name" className="input" autoComplete="name" value={name} onChange={e => setName(e.target.value)} /></div>}
-          <div className="field"><label htmlFor="auth-email">Электронная почта</label><input id="auth-email" className="input" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} /></div>
-          <div className="field"><label htmlFor="auth-password">Пароль</label><input id="auth-password" className="input" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={12} required value={password} onChange={e => setPassword(e.target.value)} /></div>
-          {mode === "register" && <div className="field"><label htmlFor="auth-organization">Название пространства</label><input id="auth-organization" className="input" value={organizationName} onChange={e => setOrganizationName(e.target.value)} /></div>}
-          <button className="btn primary" disabled={busy}>{mode === "login" ? "Войти по электронной почте" : "Создать аккаунт"}</button>
+          {mode === "register" && <div className="field"><label htmlFor="auth-name">Name</label><input id="auth-name" className="input" autoComplete="name" value={name} onChange={e => setName(e.target.value)} /></div>}
+          <div className="field"><label htmlFor="auth-email">Email</label><input id="auth-email" className="input" type="email" autoComplete="email" required value={email} onChange={e => setEmail(e.target.value)} /></div>
+          <div className="field"><label htmlFor="auth-password">Password</label><input id="auth-password" className="input" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={12} required value={password} onChange={e => setPassword(e.target.value)} /></div>
+          {mode === "register" && <div className="field"><label htmlFor="auth-organization">Workspace name</label><input id="auth-organization" className="input" value={organizationName} onChange={e => setOrganizationName(e.target.value)} /></div>}
+          <button className="btn primary" disabled={busy}>{mode === "login" ? "Sign in with email" : "Create account"}</button>
         </form>
 
         <button className="authSwitch" onClick={() => setMode(mode === "login" ? "register" : "login")}>
-          {mode === "login" ? "Создать новый аккаунт" : "У меня уже есть аккаунт"}
+          {mode === "login" ? "Create a new account" : "I already have an account"}
         </button>
-        <div className="authNote">Google предложит выбрать аккаунт. После авторизации доступные вам каналы YouTube загрузятся автоматически.</div>
+        <div className="authNote">Google will let you choose an account. After authorization, your available YouTube channels will load automatically.</div>
       </div>
     </section>
   </main></LocalizedContent></>;
