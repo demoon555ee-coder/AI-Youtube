@@ -64,6 +64,7 @@ def test_google_oauth_allows_http_only_for_local_development(monkeypatch):
     monkeypatch.setattr(google_auth.settings, "public_base_url", "http://localhost:8000")
     monkeypatch.setattr(google_auth.settings, "google_auth_redirect_path", "/api/v1/auth/google/callback")
     monkeypatch.setattr(google_auth.settings, "app_env", "development")
+    monkeypatch.setattr(google_auth.settings, "google_client_secrets_json", '{"web":{"client_id":"test-client","client_secret":"test-secret","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token"}}')
     monkeypatch.setenv("OAUTHLIB_INSECURE_TRANSPORT", "0")
 
     google_auth.build_flow("test-state")
