@@ -8,6 +8,10 @@ test("full creator flow: register → channel → ideas → project → rendered
   const email = uniqueEmail();
   const password = "Staging-Password-123!";
 
+  await page.addInitScript(() => {
+    window.localStorage.setItem("youtube_ai_language", "en");
+  });
+
   await page.goto("/login");
   await expect(page.getByRole("heading", { name: "Start your studio" })).toBeVisible();
   await page.getByRole("button", { name: "Create a new account" }).click();
