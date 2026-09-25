@@ -42,6 +42,7 @@ from app.api.multimodal import router as multimodal_router  # pyright: ignore[re
 from app.api.autonomous_optimization import router as autonomous_optimization_router  # pyright: ignore[reportMissingImports]
 from app.api.execution import router as execution_router  # pyright: ignore[reportMissingImports]
 from app.api.governance import router as governance_router  # pyright: ignore[reportMissingImports]
+from app.api.strategy import router as strategy_router  # pyright: ignore[reportMissingImports]
 from app.api.auth import router as auth_router  # pyright: ignore[reportMissingImports]
 from app.api.billing import router as billing_router  # pyright: ignore[reportMissingImports]
 from app.api.privacy import router as privacy_router  # pyright: ignore[reportMissingImports]
@@ -141,6 +142,7 @@ app.include_router(multimodal_router)
 app.include_router(autonomous_optimization_router)
 app.include_router(execution_router)
 app.include_router(governance_router)
+app.include_router(strategy_router)
 
 
 @app.exception_handler(Exception)
