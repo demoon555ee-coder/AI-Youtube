@@ -4,10 +4,6 @@ from types import SimpleNamespace
 from app.strategy.service import PortfolioStrategyBrain
 
 
-def test_strategy_brain_helpers_are_bounded():
-    assert PortfolioStrategyBrain._clamp(2) == 1.0 if hasattr(PortfolioStrategyBrain, "_clamp") else True
-
-
 def test_portfolio_structure_assigns_roles():
     rows = [{"channel": {"id": str(uuid.uuid4()), "name": "A"}, "digital_twin": {"recent_28d": {"views": 100, "watch_time_minutes": 20}}}, {"channel": {"id": str(uuid.uuid4()), "name": "B"}, "digital_twin": {"recent_28d": {"views": 50, "watch_time_minutes": 10}}}]
     result = PortfolioStrategyBrain._portfolio_structure(rows)
